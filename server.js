@@ -7,6 +7,8 @@ const cors = require('cors');
 
 // Static files
 server.use('/templates', express.static(path.join(__dirname, 'templates')));
+// Serve output documents for download
+server.use('/download', express.static(path.join(__dirname, 'templates/output')));
 
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));

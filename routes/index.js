@@ -1,5 +1,6 @@
 
 const express = require('express');
+const path = require('path');
 const router = express.Router();
 const { generateDocument, getAvailableProdi, getRequiredFields } = require('../controllers');
 
@@ -8,6 +9,27 @@ const { generateDocument, getAvailableProdi, getRequiredFields } = require('../c
 
 // Document config routes
 // router.use('/document-config', documentConfigRoutes);
+
+// Download endpoint with proper headers
+router.get('/download/:filename', (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, '../templates/output', filename);
+
+  // Set headers for download
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+  // Send file
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      res.status(404).json({
+        success: false,
+        message: 'File tidak ditemukan'
+      });
+    }
+  });
+});
 
 // Generate document dengan prodi dinamis
 router.post('/generate-document/:type/:prodi', generateDocument);

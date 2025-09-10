@@ -1,7 +1,6 @@
 const { serviceDocument } = require('../services');
 
 const generateDocument = async (req, res) => {
-  console.log("ini generate document");
 
   try {
     const { type, prodi } = req.params;

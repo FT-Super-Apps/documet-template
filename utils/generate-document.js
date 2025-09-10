@@ -63,11 +63,20 @@ const generateDocument = async (type, prodi, data) => {
       fs.mkdirSync(outputDir, { recursive: true });
     }
     const time = new Date().getTime();
-    const outputPath = path.join(outputDir, `${prodi}_${type}_${time}.docx`);
+    const fileName = `${prodi}_${type}_${time}.docx`;
+    const outputPath = path.join(outputDir, fileName);
     const buffer = doc.getZip().generate({ type: 'nodebuffer' });
     fs.writeFileSync(outputPath, buffer);
 
-    return { filePath: outputPath, no_surat: no_surat };
+    // Generate download URL
+    const downloadUrl = `/download/${fileName}`;
+
+    return {
+      filePath: outputPath,
+      fileName: fileName,
+      downloadUrl: downloadUrl,
+      no_surat: no_surat
+    };
   } catch (error) {
     console.error('Error generating document:', error);
     throw new Error(`Gagal membuat dokumen: ${error.message}`);
