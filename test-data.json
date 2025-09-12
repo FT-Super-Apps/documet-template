@@ -1,0 +1,11 @@
+{
+  "kepada": "PT. Test Company",
+  "tempat_tujuan": "Jakarta",
+  "tableData": [
+    {
+      "nama": "John Doe",
+      "nim": "2021001",
+      "semester": "6"
+    }
+  ]
+}

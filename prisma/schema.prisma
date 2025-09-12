@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Table untuk konfigurasi dokumen (existing)
 model documents {
   id              Int               @id @default(autoincrement())
   type            String            @db.VarChar(50)
@@ -14,18 +16,116 @@ model documents {
   template_path   String?           @db.VarChar(255)
   description     String?           @db.Text
   created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  
+  // Relations
   document_fields document_fields[]
+  signed_documents signed_documents[]
   
   @@unique([type, prodi])
 }
 
 model document_fields {
-  id          Int        @id @default(autoincrement())
-  document_id Int?
-  field_name  String     @db.VarChar(255)
-  field_type  String     @db.VarChar(50)
-  is_required Boolean?   @default(true)
-  default_value String? @db.Text
-  created_at  DateTime?  @default(now()) @db.Timestamp(6)
-  documents   documents? @relation(fields: [document_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id            Int        @id @default(autoincrement())
+  document_id   Int?
+  field_name    String     @db.VarChar(255)
+  field_type    String     @db.VarChar(50)
+  is_required   Boolean?   @default(true)
+  default_value String?    @db.Text
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  
+  // Relations
+  documents     documents? @relation(fields: [document_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+// Table untuk menyimpan penandatangan yang terdaftar
+model signers {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(255)
+  nip          String?  @db.VarChar(50)
+  role         String   @db.VarChar(100) // dosen_pembimbing, ketua_prodi, dekan
+  department   String?  @db.VarChar(100)
+  prodi        String?  @db.VarChar(100)
+  public_key   String   @db.Text // EdDSA public key
+  private_key  String   @db.Text // EdDSA private key (encrypted)
+  key_id       String   @db.VarChar(32) // Unique identifier untuk key
+  is_active    Boolean  @default(true)
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt @db.Timestamp(6)
+  
+  // Relations
+  document_signatures document_signatures[]
+  
+  @@unique([nip])
+  @@unique([key_id])
+}
+
+// Table untuk menyimpan dokumen yang telah ditandatangani
+model signed_documents {
+  id               String   @id @default(uuid())
+  document_type    String   @db.VarChar(50)
+  prodi            String   @db.VarChar(100)
+  document_content String   @db.Text // Original document content atau path
+  document_hash    String   @db.VarChar(64) // SHA-256 hash
+  no_surat         String?  @db.VarChar(100)
+  file_path        String?  @db.VarChar(500)
+  qr_code_data     String   @db.Text // JSON data untuk QR Code
+  qr_code_image    String?  @db.VarChar(500) // Path ke QR Code image
+  
+  // Multi-signature metadata
+  total_signatures_required Int     @default(3)
+  total_signatures_received Int     @default(0)
+  is_complete              Boolean @default(false)
+  
+  // Timestamps
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  completed_at     DateTime? @db.Timestamp(6)
+  
+  // Relations
+  document_id      Int?
+  documents        documents? @relation(fields: [document_id], references: [id])
+  document_signatures document_signatures[]
+  verification_logs verification_logs[]
+}
+
+// Table untuk menyimpan setiap signature individual
+model document_signatures {
+  id              Int      @id @default(autoincrement())
+  signed_doc_id   String   // FK ke signed_documents
+  signer_id       Int      // FK ke signers
+  signature_data  String   @db.Text // EdDSA signature dalam base64
+  signature_hash  String   @db.VarChar(64) // Hash dari signature untuk quick lookup
+  signer_info     String   @db.Text // JSON dengan info penandatangan
+  algorithm       String   @db.VarChar(50) @default("EdDSA")
+  timestamp       DateTime @default(now()) @db.Timestamp(6)
+  is_valid        Boolean  @default(true)
+  
+  // Relations
+  signed_document signed_documents @relation(fields: [signed_doc_id], references: [id], onDelete: Cascade)
+  signer          signers @relation(fields: [signer_id], references: [id])
+  
+  @@unique([signed_doc_id, signer_id]) // Satu signer hanya bisa menandatangani satu dokumen sekali
+}
+
+// Table untuk log verifikasi
+model verification_logs {
+  id              Int      @id @default(autoincrement())
+  signed_doc_id   String   // FK ke signed_documents
+  verifier_ip     String?  @db.VarChar(45)
+  verifier_agent  String?  @db.Text
+  verification_method String @db.VarChar(50) // qr_scan, api_call, manual
+  verification_result Boolean
+  verification_details String? @db.Text // JSON dengan detail hasil verifikasi
+  verified_at     DateTime @default(now()) @db.Timestamp(6)
+  
+  // Relations
+  signed_document signed_documents @relation(fields: [signed_doc_id], references: [id], onDelete: Cascade)
+}
+
+// Table untuk konfigurasi sistem
+model system_config {
+  id          Int      @id @default(autoincrement())
+  config_key  String   @unique @db.VarChar(100)
+  config_value String  @db.Text
+  description String?  @db.Text
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 }

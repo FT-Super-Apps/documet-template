@@ -9,11 +9,15 @@ const cors = require('cors');
 server.use('/templates', express.static(path.join(__dirname, 'templates')));
 // Serve output documents for download
 server.use('/download', express.static(path.join(__dirname, 'templates/output')));
+// Serve public files (dashboard.html)
+server.use(express.static(path.join(__dirname, 'public')));
 
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 server.use(cors());
 
+// Main routes (including dashboard)
+server.use('/', route);
 // API routes  
 server.use('/api', route);
 

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdDSA Multi-Signature Document System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans" x-data="documentApp()">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                    <div>
+                        <h1 class="text-white text-xl font-bold">EdDSA Multi-Signature</h1>
+                        <p class="text-blue-100 text-sm">Sistem Tanda Tangan Digital</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-white text-sm">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span x-text="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-file-signature text-3xl text-blue-500"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Dokumen</p>
+                        <p class="text-2xl font-semibold text-gray-900" x-text="stats.totalDocuments || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Dokumen Lengkap</p>
+                        <p class="text-2xl font-semibold text-gray-900" x-text="stats.completedDocuments || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-eye text-3xl text-purple-500"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Verifikasi</p>
+                        <p class="text-2xl font-semibold text-gray-900" x-text="stats.totalVerifications || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-day text-3xl text-orange-500"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Verifikasi Hari Ini</p>
+                        <p class="text-2xl font-semibold text-gray-900" x-text="stats.todayVerifications || 0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Generate Document -->
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-plus-circle text-2xl text-blue-500 mr-3"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">Buat Dokumen Baru</h2>
+                </div>
+                
+                <form @submit.prevent="generateDocument()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Dokumen</label>
+                            <select x-model="newDoc.type" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih jenis dokumen</option>
+                                <option value="kkp">Kerja Kuliah Praktik (KKP)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Program Studi</label>
+                            <select x-model="newDoc.prodi" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih program studi</option>
+                                <option value="informatika">Teknik Informatika</option>
+                                <option value="elektro">Teknik Elektro</option>
+                                <option value="arsitektur">Arsitektur</option>
+                                <option value="pengairan">Teknik Pengairan</option>
+                                <option value="pwk">Perencanaan Wilayah Kota</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kepada</label>
+                            <input x-model="newDoc.kepada" type="text" required placeholder="PT. Nama Perusahaan" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tempat Tujuan</label>
+                            <input x-model="newDoc.tempat_tujuan" type="text" required placeholder="Jakarta" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Mahasiswa</label>
+                            <div class="space-y-2" x-show="newDoc.tableData.length > 0">
+                                <template x-for="(student, index) in newDoc.tableData" :key="index">
+                                    <div class="flex space-x-2">
+                                        <input x-model="student.nama" type="text" placeholder="Nama Mahasiswa" required
+                                               class="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                        <input x-model="student.nim" type="text" placeholder="NIM" required
+                                               class="w-24 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                        <input x-model="student.semester" type="number" placeholder="Semester" required
+                                               class="w-20 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                        <button type="button" @click="removeStudent(index)" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                            <i class="fas fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            <button type="button" @click="addStudent()" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                <i class="fas fa-plus mr-2"></i>Tambah Mahasiswa
+                            </button>
+                        </div>
+
+                        <button type="submit" :disabled="isGenerating" 
+                                class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                            <i class="fas fa-file-signature mr-2"></i>
+                            <span x-show="!isGenerating">Buat Dokumen Bertanda Tangan</span>
+                            <span x-show="isGenerating">Membuat Dokumen...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Verify Document -->
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-search text-2xl text-green-500 mr-3"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">Verifikasi Dokumen</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ID Dokumen</label>
+                        <input x-model="verifyId" type="text" placeholder="Masukkan ID dokumen" 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+
+                    <button @click="verifyDocument()" :disabled="!verifyId || isVerifying" 
+                            class="w-full bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        <span x-show="!isVerifying">Verifikasi Dokumen</span>
+                        <span x-show="isVerifying">Memverifikasi...</span>
+                    </button>
+
+                    <!-- Verification Results -->
+                    <div x-show="verificationResult" class="mt-4 p-4 rounded-lg" :class="verificationResult?.isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex items-center mb-2">
+                            <i :class="verificationResult?.isValid ? 'fas fa-check-circle text-green-500' : 'fas fa-times-circle text-red-500'" class="text-xl mr-2"></i>
+                            <span class="font-semibold" :class="verificationResult?.isValid ? 'text-green-800' : 'text-red-800'">
+                                <span x-show="verificationResult?.isValid">Dokumen Valid</span>
+                                <span x-show="!verificationResult?.isValid">Dokumen Tidak Valid</span>
+                            </span>
+                        </div>
+                        <div x-show="verificationResult" class="text-sm space-y-1">
+                            <p><strong>No. Surat:</strong> <span x-text="verificationResult?.noSurat"></span></p>
+                            <p><strong>Jenis:</strong> <span x-text="verificationResult?.documentType?.toUpperCase()"></span></p>
+                            <p><strong>Prodi:</strong> <span x-text="verificationResult?.prodi?.charAt(0)?.toUpperCase() + verificationResult?.prodi?.slice(1)"></span></p>
+                            <p><strong>Tanda Tangan:</strong> <span x-text="verificationResult?.totalSignatures"></span>/<span x-text="verificationResult?.requiredSignatures"></span></p>
+                        </div>
+                        <!-- Action buttons for verified document -->
+                        <div x-show="verificationResult" class="mt-3 flex gap-2">
+                            <button @click="window.open(`/verify/${verifyId}`, '_blank')" 
+                                    class="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 flex items-center">
+                                <i class="fas fa-external-link-alt mr-1"></i>
+                                Lihat Detail
+                            </button>
+                            <button x-show="verificationResult?.isValid" @click="downloadDocument(verifyId)" 
+                                    class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600 flex items-center">
+                                <i class="fas fa-download mr-1"></i>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-heartbeat text-2xl text-red-500 mr-3"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">Status Sistem</h2>
+                </div>
+                
+                <div class="space-y-3">
+                    <template x-for="(status, service) in healthStatus" :key="service">
+                        <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                            <span class="capitalize" x-text="service.replace('_', ' ')"></span>
+                            <div class="flex items-center">
+                                <i class="fas fa-circle text-green-500 text-xs mr-2" x-show="status === 'connected' || status === 'enabled' || status === 'OK'"></i>
+                                <i class="fas fa-circle text-red-500 text-xs mr-2" x-show="status !== 'connected' && status !== 'enabled' && status !== 'OK'"></i>
+                                <span class="text-sm font-medium capitalize" x-text="status"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <button @click="refreshHealth()" class="w-full mt-4 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                    <i class="fas fa-refresh mr-2"></i>Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Documents -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-history text-2xl text-purple-500 mr-3"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">Dokumen Terbaru</h2>
+                </div>
+                <button @click="refreshDocuments()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">
+                    <i class="fas fa-refresh mr-2"></i>Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prodi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Surat</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="doc in documents" :key="doc.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <span x-text="doc.id.substring(0, 8) + '...'"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 uppercase" x-text="doc.document_type"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize" x-text="doc.prodi"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="doc.no_surat"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span x-show="doc.is_complete" class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Lengkap</span>
+                                    <span x-show="!doc.is_complete" class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">Pending</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <button @click="verifyId = doc.id; verifyDocument()" class="text-blue-600 hover:text-blue-900">Verifikasi</button>
+                                    <button x-show="doc.file_path" @click="downloadDocument(doc.id)" class="text-green-600 hover:text-green-900">Download</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div x-show="message.show" x-transition class="fixed top-4 right-4 max-w-sm w-full z-50">
+        <div class="rounded-lg p-4 shadow-lg" :class="message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
+            <div class="flex items-center">
+                <i :class="message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'" class="text-xl mr-3"></i>
+                <span x-text="message.text"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function documentApp() {
+            return {
+                currentTime: '',
+                stats: {},
+                healthStatus: {},
+                documents: [],
+                verifyId: '',
+                verificationResult: null,
+                isGenerating: false,
+                isVerifying: false,
+                message: {
+                    show: false,
+                    type: '',
+                    text: ''
+                },
+                newDoc: {
+                    type: '',
+                    prodi: '',
+                    kepada: '',
+                    tempat_tujuan: '',
+                    tableData: []
+                },
+
+                init() {
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                    this.loadStats();
+                    this.loadHealth();
+                    this.loadDocuments();
+                    this.addStudent();
+                },
+
+                updateTime() {
+                    this.currentTime = new Date().toLocaleString('id-ID');
+                },
+
+                showMessage(type, text) {
+                    this.message = { show: true, type, text };
+                    setTimeout(() => {
+                        this.message.show = false;
+                    }, 5000);
+                },
+
+                addStudent() {
+                    this.newDoc.tableData.push({
+                        nama: '',
+                        nim: '',
+                        semester: ''
+                    });
+                },
+
+                removeStudent(index) {
+                    this.newDoc.tableData.splice(index, 1);
+                },
+
+                async loadStats() {
+                    try {
+                        const response = await fetch('/api/eddsa/stats');
+                        const result = await response.json();
+                        if (result.success) {
+                            this.stats = result.data;
+                        }
+                    } catch (error) {
+                        console.error('Error loading stats:', error);
+                    }
+                },
+
+                async loadHealth() {
+                    try {
+                        const response = await fetch('/api/health');
+                        const result = await response.json();
+                        this.healthStatus = result.services;
+                    } catch (error) {
+                        console.error('Error loading health:', error);
+                    }
+                },
+
+                async loadDocuments() {
+                    try {
+                        const response = await fetch('/api/eddsa/documents?limit=10');
+                        const result = await response.json();
+                        if (result.success) {
+                            this.documents = result.data.documents;
+                        }
+                    } catch (error) {
+                        console.error('Error loading documents:', error);
+                    }
+                },
+
+                async generateDocument() {
+                    if (this.newDoc.tableData.length === 0) {
+                        this.showMessage('error', 'Tambahkan minimal satu mahasiswa');
+                        return;
+                    }
+
+                    this.isGenerating = true;
+                    try {
+                        const url = `/api/eddsa/generate-document/${this.newDoc.type}/${this.newDoc.prodi}`;
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                kepada: this.newDoc.kepada,
+                                tempat_tujuan: this.newDoc.tempat_tujuan,
+                                tableData: this.newDoc.tableData
+                            })
+                        });
+
+                        const result = await response.json();
+                        if (result.success) {
+                            this.showMessage('success', 'Dokumen berhasil dibuat dan ditandatangani!');
+                            this.newDoc = { type: '', prodi: '', kepada: '', tempat_tujuan: '', tableData: [] };
+                            this.addStudent();
+                            this.loadStats();
+                            this.loadDocuments();
+                        } else {
+                            this.showMessage('error', 'Error: ' + result.error);
+                        }
+                    } catch (error) {
+                        this.showMessage('error', 'Terjadi kesalahan: ' + error.message);
+                    } finally {
+                        this.isGenerating = false;
+                    }
+                },
+
+                async verifyDocument() {
+                    this.isVerifying = true;
+                    this.verificationResult = null;
+                    try {
+                        const url = `/api/eddsa/verify/${this.verifyId}`;
+                        const response = await fetch(url);
+                        const result = await response.json();
+                        if (result.success) {
+                            this.verificationResult = result.data;
+                            this.loadStats();
+                        } else {
+                            this.showMessage('error', 'Error: ' + result.error);
+                        }
+                    } catch (error) {
+                        this.showMessage('error', 'Terjadi kesalahan: ' + error.message);
+                    } finally {
+                        this.isVerifying = false;
+                    }
+                },
+
+                async downloadDocument(documentId) {
+                    try {
+                        const url = `/api/eddsa/download/${documentId}`;
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url2 = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url2;
+                            a.download = `document-${documentId}.docx`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url2);
+                            this.showMessage('success', 'Dokumen berhasil didownload');
+                        } else {
+                            this.showMessage('error', 'Gagal mendownload dokumen');
+                        }
+                    } catch (error) {
+                        this.showMessage('error', 'Terjadi kesalahan: ' + error.message);
+                    }
+                },
+
+                refreshHealth() {
+                    this.loadHealth();
+                },
+
+                refreshDocuments() {
+                    this.loadDocuments();
+                    this.loadStats();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
