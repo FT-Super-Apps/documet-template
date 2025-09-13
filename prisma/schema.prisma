@@ -121,6 +121,18 @@ model verification_logs {
   signed_document signed_documents @relation(fields: [signed_doc_id], references: [id], onDelete: Cascade)
 }
 
+// Table untuk konfigurasi signature requirements berdasarkan document type
+model document_signature_config {
+  id                        Int      @id @default(autoincrement())
+  document_type             String   @unique @db.VarChar(50) // kkp, kkplus, bimbingan
+  required_signature_count  Int      @default(1)
+  required_roles            String[] // Array dari required roles
+  description               String?  @db.Text
+  is_active                Boolean  @default(true)
+  created_at               DateTime @default(now()) @db.Timestamp(6)
+  updated_at               DateTime @updatedAt @db.Timestamp(6)
+}
+
 // Table untuk konfigurasi sistem
 model system_config {
   id          Int      @id @default(autoincrement())

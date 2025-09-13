@@ -20,6 +20,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.15.0",
+    "axios": "^1.12.1",
     "cors": "^2.8.5",
     "docxtemplater": "^3.53.0",
     "docxtemplater-image-module-free": "^1.1.1",

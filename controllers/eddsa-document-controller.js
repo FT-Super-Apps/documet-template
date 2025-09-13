@@ -1,6 +1,7 @@
 // controllers/eddsa-document-controller.js
 const { PrismaClient } = require('@prisma/client');
 const { EdDSACrypto, MultiSignatureManager } = require('../utils/eddsa-crypto');
+const { getSignatureRequirements, getSignatureRequirementsFromDB, isValidDocumentType } = require('../config/document-signature-config');
 const generateDocumentUtil = require('../utils/generate-document');
 const { generateQRCodeWithSignature } = require('../utils/generate-qrcode-enhanced');
 const fs = require('fs-extra');
@@ -12,7 +13,6 @@ const prisma = new PrismaClient();
 class EdDSADocumentController {
   constructor() {
     this.crypto = new EdDSACrypto();
-    this.multiSigManager = new MultiSignatureManager();
   }
 
   /**
@@ -25,7 +25,22 @@ class EdDSADocumentController {
 
       console.log(`🔐 Generating signed document: ${type} for ${prodi}`);
 
-      // 1. Validate required parameters
+      // 1. Validate document type
+      if (!isValidDocumentType(type)) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid document type: ${type}. Supported types: kkp, kkplus, bimbingan`
+        });
+      }
+
+      // 2. Get signature requirements for this document type
+      const signatureConfig = await getSignatureRequirementsFromDB(type);
+      const multiSigManager = new MultiSignatureManager();
+      await multiSigManager.initialize(type);
+
+      console.log(`📝 Document type: ${type} requires ${signatureConfig.requiredSignatureCount} signatures from: ${signatureConfig.requiredRoles.join(', ')}`);
+
+      // 3. Validate required parameters
       if (!type || !prodi) {
         return res.status(400).json({
           success: false,
@@ -33,30 +48,44 @@ class EdDSADocumentController {
         });
       }
 
-      // 2. Get signers for this prodi
+      // 4. Get signers for this prodi with required roles
       const signers = await prisma.signers.findMany({
         where: {
           prodi: prodi,
-          is_active: true
+          is_active: true,
+          role: {
+            in: signatureConfig.requiredRoles
+          }
         },
         orderBy: { role: 'asc' }
       });
 
-      if (signers.length < 3) {
+      if (signers.length < signatureConfig.requiredSignatureCount) {
         return res.status(400).json({
           success: false,
-          error: `Insufficient signers for ${prodi}. Need 3 signers, found ${signers.length}`
+          error: `Insufficient signers for ${prodi}. Document type '${type}' requires ${signatureConfig.requiredSignatureCount} signers with roles: ${signatureConfig.requiredRoles.join(', ')}. Found ${signers.length} signers.`
         });
       }
 
-      // 3. Generate document
+      // 5. Validate that all required roles are available
+      const availableRoles = signers.map(s => s.role);
+      const missingRoles = signatureConfig.requiredRoles.filter(role => !availableRoles.includes(role));
+
+      if (missingRoles.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `Missing required signer roles for document type '${type}': ${missingRoles.join(', ')}`
+        });
+      }
+
+      // 6. Generate document
       const documentContent = JSON.stringify(documentData);
       const documentHash = this.crypto.hashDocument(documentContent);
 
-      // 4. Generate document number
+      // 7. Generate document number
       const noSurat = await this.generateDocumentNumber(type, prodi);
 
-      // 5. Create multi-signature
+      // 8. Create multi-signature using dynamic requirements
       const signerDetails = {};
       const signersFormatted = {};
 
@@ -75,12 +104,12 @@ class EdDSADocumentController {
         };
       });
 
-      const multiSig = this.multiSigManager.createMultiSignature(
+      const multiSig = multiSigManager.createMultiSignature(
         documentContent,
         signersFormatted,
         signerDetails
       );
-      // 6. Create QR code data with verification URL
+      // 9. Create QR code data with verification URL
       const documentId = uuidv4();
       const baseUrl = process.env.BASE_URL || 'http://localhost:8080';
       const verificationUrl = `${baseUrl}/verify/${documentId}`;
@@ -93,11 +122,13 @@ class EdDSADocumentController {
         prodi: prodi,
         noSurat: noSurat,
         signatures: multiSig.signatures.length,
+        requiredSignatures: signatureConfig.requiredSignatureCount,
+        signatureConfig: signatureConfig.description,
         timestamp: new Date().toISOString(),
         message: "Scan untuk verifikasi dokumen"
       };
 
-      // 7. Save to database
+      // 10. Save to database with dynamic requirements
       const signedDoc = await prisma.signed_documents.create({
         data: {
           id: documentId, // Use the documentId from qrData
@@ -107,44 +138,48 @@ class EdDSADocumentController {
           document_hash: documentHash,
           no_surat: noSurat,
           qr_code_data: JSON.stringify(qrData),
-          total_signatures_required: 3,
+          total_signatures_required: signatureConfig.requiredSignatureCount,
           total_signatures_received: multiSig.signatures.length,
           is_complete: multiSig.isComplete,
           completed_at: multiSig.isComplete ? new Date() : null
         }
       });
 
-      // 8. Save individual signatures
+      // 11. Save individual signatures
       for (const [index, signature] of multiSig.signatures.entries()) {
-        const signer = signers[index];
-        await prisma.document_signatures.create({
-          data: {
-            signed_doc_id: signedDoc.id,
-            signer_id: signer.id,
-            signature_data: signature.signature,
-            signature_hash: this.crypto.hashDocument(signature.signature),
-            signer_info: JSON.stringify({
-              role: signer.role,
-              name: signer.name,
-              nip: signer.nip
-            }),
-            algorithm: 'EdDSA'
-          }
-        });
+        const signer = signers.find(s => s.role === signature.role);
+        if (signer) {
+          await prisma.document_signatures.create({
+            data: {
+              signed_doc_id: signedDoc.id,
+              signer_id: signer.id,
+              signature_data: signature.signature,
+              signature_hash: this.crypto.hashDocument(signature.signature),
+              signer_info: JSON.stringify({
+                role: signer.role,
+                name: signer.name,
+                nip: signer.nip
+              }),
+              algorithm: 'EdDSA'
+            }
+          });
+        }
       }
 
-      // 9. Generate physical document
+      // 12. Generate physical document
       const outputPath = await this.generatePhysicalDocument(type, prodi, documentData, qrData);
 
-      // 10. Update document with file path
+      // 13. Update document with file path
       await prisma.signed_documents.update({
         where: { id: signedDoc.id },
         data: { file_path: outputPath }
       });
 
+      console.log(`✅ Document generated successfully: ${signedDoc.id} with ${multiSig.signatures.length}/${signatureConfig.requiredSignatureCount} signatures`);
+
       res.json({
         success: true,
-        message: 'Document generated and signed successfully',
+        message: `Document generated and signed successfully with ${multiSig.signatures.length}/${signatureConfig.requiredSignatureCount} signatures`,
         data: {
           documentId: signedDoc.id,
           documentType: type,
@@ -444,6 +479,14 @@ class EdDSADocumentController {
       throw new Error('Document not found');
     }
 
+    // Get signature requirements for this document type
+    const signatureConfig = await getSignatureRequirementsFromDB(document.document_type);
+    const multiSigManager = new MultiSignatureManager();
+    await multiSigManager.initialize(document.document_type);
+
+    console.log(`🔍 Verifying document ${documentId} of type ${document.document_type}`);
+    console.log(`📝 Required: ${signatureConfig.requiredSignatureCount} signatures from: ${signatureConfig.requiredRoles.join(', ')}`);
+
     // Verify each signature
     const verificationResults = [];
     for (const signature of document.document_signatures) {
@@ -458,9 +501,18 @@ class EdDSADocumentController {
       verificationResults.push({
         signer: signature.signer.name,
         role: signature.signer.role,
-        isValid
+        isValid,
+        required: signatureConfig.requiredRoles.includes(signature.signer.role)
       });
     }
+
+    // Check if all required roles are present and valid
+    const requiredRolesSigned = signatureConfig.requiredRoles.filter(role =>
+      verificationResults.some(result => result.role === role && result.isValid)
+    );
+
+    const isFullyValid = requiredRolesSigned.length === signatureConfig.requiredSignatureCount &&
+      verificationResults.every(r => r.isValid);
 
     // Log verification attempt
     await prisma.verification_logs.create({
@@ -469,8 +521,13 @@ class EdDSADocumentController {
         verifier_ip: req.ip,
         verifier_agent: req.get('User-Agent'),
         verification_method: 'api_call',
-        verification_result: verificationResults.every(r => r.isValid),
-        verification_details: JSON.stringify(verificationResults)
+        verification_result: isFullyValid,
+        verification_details: JSON.stringify({
+          verificationResults,
+          signatureConfig: signatureConfig.description,
+          requiredRolesSigned,
+          missingRoles: signatureConfig.requiredRoles.filter(role => !requiredRolesSigned.includes(role))
+        })
       }
     });
 
@@ -484,10 +541,14 @@ class EdDSADocumentController {
         isComplete: document.is_complete,
         totalSignatures: document.total_signatures_received,
         requiredSignatures: document.total_signatures_required,
+        signatureConfig: signatureConfig.description,
+        requiredRoles: signatureConfig.requiredRoles,
         createdAt: document.created_at,
         completedAt: document.completed_at,
         verificationResults,
-        isValid: verificationResults.every(r => r.isValid)
+        requiredRolesSigned,
+        missingRoles: signatureConfig.requiredRoles.filter(role => !requiredRolesSigned.includes(role)),
+        isValid: isFullyValid
       }
     };
   }

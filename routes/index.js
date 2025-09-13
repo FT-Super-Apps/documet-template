@@ -10,8 +10,14 @@ const { generateDocument, getAvailableProdi, getRequiredFields } = require('../c
 // NEW: EdDSA Multi-Signature routes
 const eddsaRoutes = require('./eddsa-routes');
 
+// NEW: Admin management routes
+const adminRoutes = require('./admin-routes');
+
 // Mount EdDSA routes with prefix
 router.use('/eddsa', eddsaRoutes);
+
+// Mount Admin routes with prefix
+router.use('/admin', adminRoutes);
 
 // Document config routes
 // router.use('/document-config', documentConfigRoutes);
@@ -23,6 +29,11 @@ router.use('/eddsa', eddsaRoutes);
 // Main Dashboard - Modern EdDSA Multi-Signature Interface
 router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+// Admin Dashboard - Management Interface
+router.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
 // Document Verification Route (for QR Code scanning)

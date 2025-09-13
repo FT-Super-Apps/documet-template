@@ -1,6 +1,7 @@
 // utils/eddsa-crypto.js
 const crypto = require('crypto');
 const { Buffer } = require('buffer');
+const { getSignatureRequirements } = require('../config/document-signature-config');
 
 /**
  * EdDSA (Ed25519) Implementation for Multi-Signature Digital Document System
@@ -142,16 +143,64 @@ class EdDSACrypto {
 
 /**
  * Multi-Signature Manager
- * Mengelola tanda tangan dari multiple parties (dosen, kaprodi, dekan)
+ * Mengelola tanda tangan dari multiple parties berdasarkan document type
  */
 class MultiSignatureManager {
-  constructor() {
+  constructor(documentType = null) {
     this.crypto = new EdDSACrypto();
-    this.requiredSigners = [
-      { role: 'dosen_pembimbing', required: true },
-      { role: 'ketua_prodi', required: true },
-      { role: 'dekan', required: true }
-    ];
+    this.documentType = documentType;
+    this.signatureConfig = null;
+  }
+
+  /**
+   * Initialize signature configuration for document type
+   * @param {string} documentType 
+   */
+  async initialize(documentType) {
+    this.documentType = documentType;
+    try {
+      const { getSignatureRequirementsFromDB } = require('../config/document-signature-config');
+      this.signatureConfig = await getSignatureRequirementsFromDB(documentType);
+    } catch (error) {
+      console.warn(`Warning: Could not set signature config from DB for ${documentType}:`, error.message);
+      const { getSignatureRequirements } = require('../config/document-signature-config');
+      this.signatureConfig = getSignatureRequirements(documentType);
+    }
+    return this;
+  }
+
+  /**
+   * Set document type dan update signature requirements (sync version)
+   * @param {string} documentType 
+   */
+  setDocumentTypeSync(documentType) {
+    this.documentType = documentType;
+    try {
+      const { getSignatureRequirements } = require('../config/document-signature-config');
+      this.signatureConfig = getSignatureRequirements(documentType);
+    } catch (error) {
+      console.warn(`Warning: Could not set signature config for ${documentType}:`, error.message);
+    }
+  }
+
+  /**
+   * Get required signers based on document type
+   * @returns {Array}
+   */
+  getRequiredSigners() {
+    if (!this.signatureConfig) {
+      // Default fallback untuk backward compatibility
+      return [
+        { role: 'dosen_pembimbing', required: true },
+        { role: 'ketua_prodi', required: true },
+        { role: 'dekan', required: true }
+      ];
+    }
+
+    return this.signatureConfig.requiredRoles.map(role => ({
+      role,
+      required: true
+    }));
   }
 
   /**
@@ -160,8 +209,9 @@ class MultiSignatureManager {
    */
   initializeSigners() {
     const signers = {};
+    const requiredSigners = this.getRequiredSigners();
 
-    this.requiredSigners.forEach(signer => {
+    requiredSigners.forEach(signer => {
       const keyPair = this.crypto.generateKeyPair();
       signers[signer.role] = {
         ...keyPair,
@@ -211,7 +261,8 @@ class MultiSignatureManager {
       }
 
       // Validasi apakah semua required signers sudah menandatangani
-      const missingSigners = this.requiredSigners
+      const requiredSigners = this.getRequiredSigners();
+      const missingSigners = requiredSigners
         .filter(req => req.required && !signers[req.role]?.hasSigned)
         .map(req => req.role);
 
@@ -269,12 +320,19 @@ class MultiSignatureManager {
         if (isValid) validSignatures++;
       });
 
+      const requiredSigners = this.getRequiredSigners();
+      const requiredSignatureCount = this.signatureConfig ?
+        this.signatureConfig.requiredSignatureCount :
+        requiredSigners.filter(r => r.required).length;
+
       return {
-        isValid: validSignatures === signatures.length && validSignatures >= this.requiredSigners.filter(r => r.required).length,
+        isValid: validSignatures === signatures.length && validSignatures >= requiredSignatureCount,
         validSignatures,
         totalSignatures: signatures.length,
+        requiredSignatures: requiredSignatureCount,
         verificationResults,
-        documentHash: currentDocHash
+        documentHash: currentDocHash,
+        documentType: this.documentType
       };
     } catch (error) {
       return {

@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { seedDocumentSignatureConfig } = require('./seed-document-signature-config');
 
 const prisma = new PrismaClient();
 
@@ -108,6 +109,9 @@ async function main() {
   }
 
   console.log('✅ Seed data berhasil ditambahkan untuk semua prodi!');
+
+  // Seed document signature configuration
+  await seedDocumentSignatureConfig();
 }
 
 main()
