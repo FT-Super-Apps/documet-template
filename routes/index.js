@@ -26,14 +26,19 @@ router.use('/admin', adminRoutes);
 // MODERN WEB INTERFACE ROUTES
 // ===========================================
 
-// Main Dashboard - Modern EdDSA Multi-Signature Interface
+// Main Dashboard - Modern EdDSA Multi-Signature Interface (Unified Admin)
 router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// Admin Dashboard - Management Interface
+// Admin Dashboard - Management Interface (Same as main dashboard)
 router.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'));
+});
+
+// Legacy Dashboard route - redirect to admin
+router.get('/dashboard', (req, res) => {
+  res.redirect('/');
 });
 
 // Document Verification Route (for QR Code scanning)
@@ -278,6 +283,47 @@ router.get('/templates/:type', getAvailableProdi);
 
 // Mendapatkan field yang diperlukan untuk template tertentu (Legacy)
 router.get('/templates/:type/:prodi/fields', getRequiredFields);
+
+// API endpoint untuk mendapatkan fields berdasarkan prodi dan type (for admin interface)
+router.get('/api/fields/:prodi/:type', async (req, res) => {
+  try {
+    const { prodi, type } = req.params;
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    // Get document configuration
+    const document = await prisma.documents.findFirst({
+      where: { type, prodi },
+      include: { document_fields: true }
+    });
+
+    if (!document) {
+      return res.json({
+        success: false,
+        error: 'Document configuration not found'
+      });
+    }
+
+    // Transform fields to frontend format
+    const fields = document.document_fields.map(field => ({
+      name: field.field_name,
+      label: field.label || field.field_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      type: field.field_type || 'text',
+      placeholder: field.placeholder || '',
+      required: field.is_required || true
+    }));
+
+    res.json({
+      success: true,
+      data: fields
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // Backward compatibility - redirect ke endpoint lama (default ke informatika)
 router.post('/generate-document/:type', (req, res, next) => {

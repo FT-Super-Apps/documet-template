@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,21 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    </style>
 </head>
-<body class="bg-gray-100" x-data="adminDashboard()">
+<body class="bg-gray-50" x-data="adminDashboard()")
     
     <!-- Navigation -->
-    <nav class="bg-blue-600 text-white p-4 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <i class="fas fa-shield-alt text-2xl"></i>
-                <h1 class="text-xl font-bold">EdDSA Admin Dashboard</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span x-text="'Last updated: ' + new Date().toLocaleString()"></span>
-                <button @click="refreshDashboard()" class="bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+    <nav class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                    <div>
+                        <h1 class="text-white text-xl font-bold">EdDSA Admin Dashboard</h1>
+                        <p class="text-blue-100 text-sm">Sistem Manajemen Tanda Tangan Digital</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 text-white">
+                    <div class="text-sm">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span x-text="currentTime"></span>
+                    </div>
+                    <button @click="refreshDashboard()" class="bg-blue-500 px-3 py-1 rounded hover:bg-blue-400 transition">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -30,8 +43,8 @@
     <div class="container mx-auto p-6">
         
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-blue-100 text-blue-600">
                         <i class="fas fa-cog text-xl"></i>
@@ -43,7 +56,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
                         <i class="fas fa-users text-xl"></i>
@@ -55,26 +68,38 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-purple-100 text-purple-600">
                         <i class="fas fa-file-alt text-xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm text-gray-500">Document Types</p>
-                        <p class="text-2xl font-semibold" x-text="stats.document_types || 0"></p>
+                        <p class="text-sm text-gray-500">Total Documents</p>
+                        <p class="text-2xl font-semibold" x-text="stats.totalDocuments || 0"></p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-orange-100 text-orange-600">
                         <i class="fas fa-certificate text-xl"></i>
                     </div>
                     <div class="ml-4">
                         <p class="text-sm text-gray-500">Signed Documents</p>
-                        <p class="text-2xl font-semibold" x-text="stats.signed_documents || 0"></p>
+                        <p class="text-2xl font-semibold" x-text="stats.completedDocuments || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
+                        <i class="fas fa-eye text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Total Verifications</p>
+                        <p class="text-2xl font-semibold" x-text="stats.totalVerifications || 0"></p>
                     </div>
                 </div>
             </div>
@@ -84,6 +109,11 @@
         <div class="bg-white rounded-lg shadow-md mb-6">
             <div class="border-b border-gray-200">
                 <nav class="flex space-x-8 px-6">
+                    <button @click="activeTab = 'document-generator'" 
+                            :class="activeTab === 'document-generator' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-plus mr-2"></i>Generate Document
+                    </button>
                     <button @click="activeTab = 'signature-configs'" 
                             :class="activeTab === 'signature-configs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="py-4 px-1 border-b-2 font-medium text-sm">
@@ -99,6 +129,11 @@
                             class="py-4 px-1 border-b-2 font-medium text-sm">
                         <i class="fas fa-file-alt mr-2"></i>Documents
                     </button>
+                    <button @click="activeTab = 'verify'" 
+                            :class="activeTab === 'verify' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-shield-alt mr-2"></i>Verify Document
+                    </button>
                     <button @click="activeTab = 'logs'" 
                             :class="activeTab === 'logs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="py-4 px-1 border-b-2 font-medium text-sm">
@@ -107,9 +142,125 @@
                 </nav>
             </div>
         </div>
+                    </button>
+                </nav>
+            </div>
+        </div>
 
         <!-- Tab Contents -->
         <div class="bg-white rounded-lg shadow-md p-6">
+            
+            <!-- Document Generator Tab -->
+            <div x-show="activeTab === 'document-generator'">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-plus-circle text-blue-500 mr-3"></i>
+                    Generate Document
+                </h2>
+
+                <!-- Document Generation Form -->
+                <form @submit.prevent="generateDocument()" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Document Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-file-contract text-gray-400 mr-2"></i>Tipe Dokumen
+                            </label>
+                            <select x-model="documentForm.documentType" required 
+                                    title="Pilih tipe dokumen"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Pilih Tipe Dokumen</option>
+                                <option value="kkp">KKP (Kerja Praktik)</option>
+                                <option value="skripsi">Skripsi</option>
+                                <option value="tesis">Tesis</option>
+                            </select>
+                        </div>
+
+                        <!-- Program Studi -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-graduation-cap text-gray-400 mr-2"></i>Program Studi
+                            </label>
+                            <select x-model="documentForm.prodi" required 
+                                    title="Pilih program studi"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Pilih Program Studi</option>
+                                <option value="informatika">Teknik Informatika</option>
+                                <option value="elektro">Teknik Elektro</option>
+                                <option value="arsitektur">Arsitektur</option>
+                                <option value="pengairan">Teknik Pengairan</option>
+                                <option value="pwk">Perencanaan Wilayah Kota</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Fields -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900">Data Dokumen</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-show="documentForm.documentType && documentForm.prodi">
+                            <template x-for="field in dynamicFields" :key="field.name">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2" x-text="field.label"></label>
+                                    <input :type="field.type" 
+                                           :name="field.name"
+                                           x-model="documentForm.data[field.name]"
+                                           :placeholder="field.placeholder"
+                                           :required="field.required"
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="flex justify-end">
+                        <button type="submit" 
+                                title="Generate document with selected parameters"
+                                :disabled="!documentForm.documentType || !documentForm.prodi || generateLoading"
+                                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center">
+                            <i class="fas fa-cog mr-2" :class="generateLoading ? 'fa-spin' : ''"></i>
+                            <span x-text="generateLoading ? 'Generating...' : 'Generate Document'"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Generation Result -->
+                <div x-show="generationResult" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-green-900">Document Generated Successfully!</h4>
+                            <p class="text-green-700 mt-1" x-text="generationResult?.message"></p>
+                            <div class="mt-3 flex flex-wrap gap-3">
+                                <a x-show="generationResult?.downloadUrl" 
+                                   :href="generationResult?.downloadUrl" 
+                                   class="text-blue-600 hover:text-blue-800 flex items-center">
+                                    <i class="fas fa-download mr-1"></i>Download Document
+                                </a>
+                                <a x-show="generationResult?.qrCodeUrl" 
+                                   :href="generationResult?.qrCodeUrl" target="_blank"
+                                   class="text-purple-600 hover:text-purple-800 flex items-center">
+                                    <i class="fas fa-qrcode mr-1"></i>View QR Code
+                                </a>
+                                <button @click="generationResult = null" 
+                                        class="text-gray-600 hover:text-gray-800 flex items-center">
+                                    <i class="fas fa-times mr-1"></i>Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Progress -->
+                <div x-show="generateLoading" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-spinner fa-spin text-blue-500 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-blue-900">Generating Document...</h4>
+                            <p class="text-blue-700 text-sm">Please wait while we create your document.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Signature Configurations Tab -->
             <div x-show="activeTab === 'signature-configs'">
@@ -309,6 +460,169 @@
                 </div>
             </div>
 
+            <!-- Verify Document Tab -->
+            <div x-show="activeTab === 'verify'">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-shield-alt text-green-500 mr-3"></i>
+                    Verify Document
+                </h2>
+
+                <!-- Verification Methods -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Upload Document Verification -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-medium mb-4 flex items-center">
+                            <i class="fas fa-upload text-blue-500 mr-2"></i>
+                            Upload Document untuk Verifikasi
+                        </h3>
+                        
+                        <form @submit.prevent="verifyDocument()" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File Dokumen</label>
+                                <input type="file" 
+                                       title="Pilih file dokumen untuk verifikasi"
+                                       @change="handleDocumentUpload($event)"
+                                       accept=".pdf,.docx,.doc"
+                                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <button type="submit" 
+                                    title="Verify uploaded document"
+                                    :disabled="!verificationForm.file || verifyLoading"
+                                    class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 flex items-center justify-center">
+                                <i class="fas fa-shield-check mr-2" :class="verifyLoading ? 'fa-spin' : ''"></i>
+                                <span x-text="verifyLoading ? 'Verifying...' : 'Verify Document'"></span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- QR Code Verification -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-medium mb-4 flex items-center">
+                            <i class="fas fa-qrcode text-purple-500 mr-2"></i>
+                            Scan QR Code
+                        </h3>
+                        
+                        <form @submit.prevent="verifyQRCode()" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">QR Code Data</label>
+                                <textarea x-model="verificationForm.qrData" 
+                                          placeholder="Paste QR code data atau scan dengan kamera"
+                                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-24 resize-none"></textarea>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <button type="submit" 
+                                        title="Verify QR code data"
+                                        :disabled="!verificationForm.qrData || verifyQRLoading"
+                                        class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 flex items-center justify-center">
+                                    <i class="fas fa-search mr-2" :class="verifyQRLoading ? 'fa-spin' : ''"></i>
+                                    <span x-text="verifyQRLoading ? 'Verifying...' : 'Verify QR'"></span>
+                                </button>
+                                <button type="button" 
+                                        title="Open QR code scanner"
+                                        @click="openQRScanner()" 
+                                        class="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Verification Results -->
+                <div x-show="verificationResult" class="mt-8 p-6 rounded-lg" 
+                     :class="verificationResult?.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                    <div class="flex items-start">
+                        <i :class="verificationResult?.valid ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500'" class="mt-1 mr-3 text-xl"></i>
+                        <div class="flex-1">
+                            <h4 class="font-medium" 
+                                :class="verificationResult?.valid ? 'text-green-900' : 'text-red-900'"
+                                x-text="verificationResult?.valid ? 'Document Valid ✓' : 'Document Invalid ✗'"></h4>
+                            
+                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <strong>Document Type:</strong> 
+                                    <span x-text="verificationResult?.document_type || 'N/A'"></span>
+                                </div>
+                                <div>
+                                    <strong>Program Studi:</strong> 
+                                    <span x-text="verificationResult?.prodi || 'N/A'"></span>
+                                </div>
+                                <div>
+                                    <strong>Created Date:</strong> 
+                                    <span x-text="verificationResult?.created_at ? new Date(verificationResult.created_at).toLocaleDateString('id-ID') : 'N/A'"></span>
+                                </div>
+                                <div>
+                                    <strong>Signatures:</strong> 
+                                    <span x-text="(verificationResult?.signatures?.length || 0) + ' of ' + (verificationResult?.required_signatures || 0)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Signature Details -->
+                            <div x-show="verificationResult?.signatures?.length > 0" class="mt-4">
+                                <h5 class="font-medium text-gray-900 mb-2">Signature Details:</h5>
+                                <div class="space-y-2">
+                                    <template x-for="sig in verificationResult.signatures" :key="sig.id">
+                                        <div class="flex items-center p-2 bg-white rounded border">
+                                            <i class="fas fa-signature text-blue-500 mr-2"></i>
+                                            <div>
+                                                <span class="font-medium" x-text="sig.signer_name"></span>
+                                                <span class="text-gray-500 text-sm">
+                                                    (<span x-text="sig.role"></span>) - 
+                                                    <span x-text="new Date(sig.signed_at).toLocaleDateString('id-ID')"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <p class="mt-3 text-sm" 
+                               :class="verificationResult?.valid ? 'text-green-700' : 'text-red-700'"
+                               x-text="verificationResult?.message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Verifications -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Recent Verifications</h3>
+                    <div class="bg-white border rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Document</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="verification in recentVerifications" :key="verification.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" 
+                                            x-text="new Date(verification.verified_at).toLocaleString('id-ID')"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="verification.document_type"></div>
+                                            <div class="text-sm text-gray-500" x-text="verification.prodi"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span :class="verification.is_valid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" 
+                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                                                <span x-text="verification.is_valid ? 'Valid' : 'Invalid'"></span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="verification.details"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Recent Activity Tab -->
             <div x-show="activeTab === 'logs'">
                 <h2 class="text-xl font-semibold mb-6">Recent Verification Activity</h2>
@@ -361,13 +675,33 @@
         function adminDashboard() {
             return {
                 // State
-                activeTab: 'signature-configs',
+                activeTab: 'document-generator',
                 loading: false,
                 stats: {},
                 signatureConfigs: [],
                 signers: [],
                 documents: [],
                 recentVerifications: [],
+                currentTime: new Date().toLocaleString('id-ID'),
+                
+                // Document Generator Form
+                documentForm: {
+                    documentType: '',
+                    prodi: '',
+                    data: {}
+                },
+                dynamicFields: [],
+                generateLoading: false,
+                generationResult: null,
+                
+                // Verification Form
+                verificationForm: {
+                    file: null,
+                    qrData: ''
+                },
+                verifyLoading: false,
+                verifyQRLoading: false,
+                verificationResult: null,
                 
                 // Modal states
                 showCreateSignatureConfig: false,
@@ -377,6 +711,16 @@
                 // Initialize
                 init() {
                     this.refreshDashboard();
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                    
+                    // Watch for form changes to update dynamic fields
+                    this.$watch('documentForm.documentType', () => this.updateDynamicFields());
+                    this.$watch('documentForm.prodi', () => this.updateDynamicFields());
+                },
+                
+                updateTime() {
+                    this.currentTime = new Date().toLocaleString('id-ID');
                 },
                 
                 // API Methods
@@ -402,7 +746,7 @@
                     const data = await response.json();
                     if (data.success) {
                         this.stats = data.data.overview;
-                        this.recentVerifications = data.data.recent_verifications;
+                        this.recentVerifications = data.data.recent_verifications || [];
                     }
                 },
                 
@@ -526,6 +870,188 @@
                             alert('Error deleting document configuration');
                         }
                     }
+                },
+                
+                // Document Generator Functions
+                async updateDynamicFields() {
+                    if (!this.documentForm.documentType || !this.documentForm.prodi) {
+                        this.dynamicFields = [];
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`/api/fields/${this.documentForm.prodi}/${this.documentForm.documentType}`);
+                        const data = await response.json();
+                        if (data.success) {
+                            this.dynamicFields = data.data || [];
+                        }
+                    } catch (error) {
+                        console.error('Error loading dynamic fields:', error);
+                        this.dynamicFields = [];
+                    }
+                },
+                
+                async generateDocument() {
+                    if (!this.documentForm.documentType || !this.documentForm.prodi) {
+                        alert('Please select document type and program studi');
+                        return;
+                    }
+                    
+                    this.generateLoading = true;
+                    this.generationResult = null;
+                    
+                    try {
+                        const formData = {
+                            documentType: this.documentForm.documentType,
+                            prodi: this.documentForm.prodi,
+                            ...this.documentForm.data
+                        };
+                        
+                        const response = await fetch('/generate-document', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.generationResult = {
+                                message: `Document generated successfully for ${this.documentForm.prodi} ${this.documentForm.documentType}`,
+                                downloadUrl: data.downloadUrl,
+                                qrCodeUrl: data.qrCodeUrl,
+                                filename: data.filename
+                            };
+                            
+                            // Reset form
+                            this.documentForm = {
+                                documentType: '',
+                                prodi: '',
+                                data: {}
+                            };
+                            this.dynamicFields = [];
+                            
+                            // Refresh stats
+                            await this.loadDashboardStats();
+                        } else {
+                            alert('Failed to generate document: ' + data.error);
+                        }
+                    } catch (error) {
+                        console.error('Error generating document:', error);
+                        alert('Error generating document');
+                    } finally {
+                        this.generateLoading = false;
+                    }
+                },
+                
+                // Verification Functions
+                handleDocumentUpload(event) {
+                    const file = event.target.files[0];
+                    this.verificationForm.file = file;
+                    this.verificationResult = null;
+                },
+                
+                async verifyDocument() {
+                    if (!this.verificationForm.file) {
+                        alert('Please select a document to verify');
+                        return;
+                    }
+                    
+                    this.verifyLoading = true;
+                    this.verificationResult = null;
+                    
+                    try {
+                        const formData = new FormData();
+                        formData.append('document', this.verificationForm.file);
+                        
+                        const response = await fetch('/verify-document', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        this.verificationResult = data;
+                        
+                        // Add to recent verifications
+                        if (data.valid !== undefined) {
+                            this.recentVerifications.unshift({
+                                id: Date.now(),
+                                verified_at: new Date().toISOString(),
+                                document_type: data.document_type || 'Unknown',
+                                prodi: data.prodi || 'Unknown',
+                                is_valid: data.valid,
+                                details: data.message || 'No details'
+                            });
+                            
+                            // Keep only last 10 verifications
+                            this.recentVerifications = this.recentVerifications.slice(0, 10);
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error verifying document:', error);
+                        this.verificationResult = {
+                            valid: false,
+                            message: 'Error occurred during verification'
+                        };
+                    } finally {
+                        this.verifyLoading = false;
+                    }
+                },
+                
+                async verifyQRCode() {
+                    if (!this.verificationForm.qrData.trim()) {
+                        alert('Please enter QR code data');
+                        return;
+                    }
+                    
+                    this.verifyQRLoading = true;
+                    this.verificationResult = null;
+                    
+                    try {
+                        const response = await fetch('/verify-qr', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                qrData: this.verificationForm.qrData
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        this.verificationResult = data;
+                        
+                        // Add to recent verifications
+                        if (data.valid !== undefined) {
+                            this.recentVerifications.unshift({
+                                id: Date.now(),
+                                verified_at: new Date().toISOString(),
+                                document_type: data.document_type || 'Unknown',
+                                prodi: data.prodi || 'Unknown',
+                                is_valid: data.valid,
+                                details: data.message || 'QR Code verification'
+                            });
+                            
+                            // Keep only last 10 verifications
+                            this.recentVerifications = this.recentVerifications.slice(0, 10);
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error verifying QR code:', error);
+                        this.verificationResult = {
+                            valid: false,
+                            message: 'Error occurred during QR code verification'
+                        };
+                    } finally {
+                        this.verifyQRLoading = false;
+                    }
+                },
+                
+                openQRScanner() {
+                    alert('QR Scanner functionality would be implemented here using camera API');
+                    // In a real implementation, this would open camera for QR scanning
                 }
             };
         }
