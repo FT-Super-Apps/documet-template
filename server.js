@@ -16,12 +16,13 @@ server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 server.use(cors());
 
-// Main routes (including dashboard)
-server.use('/', (req, res) => {
+// API routes - Must come before root route
+server.use('/api', route);
+
+// Main root route - This should come AFTER /api routes
+server.get('/', (req, res) => {
   res.json({ status: 'OK', message: 'Generate Document API (EdDSA) running' });
 });
-// API routes  
-server.use('/api', route);
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
