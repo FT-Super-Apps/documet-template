@@ -2,24 +2,63 @@
 const express = require('express');
 const path = require('path');
 const router = express.Router();
-const { generateDocument, getAvailableProdi, getRequiredFields } = require('../controllers');
+// Unified controllers (EdDSA + Admin management)
+const EdDSADocumentController = require('../controllers/eddsa-document-controller');
+const AdminController = require('../controllers/admin-controller');
 
 // Import document config routes
 // const documentConfigRoutes = require('./document-config');
 
-// NEW: EdDSA Multi-Signature routes
-const eddsaRoutes = require('./eddsa-routes');
+// Instantiate controllers
+const eddsaController = new EdDSADocumentController();
+const adminController = new AdminController();
 
-// NEW: Admin management routes
-const adminRoutes = require('./admin-routes');
+// All API endpoints unified at root (router is mounted under / and /api by server)
+// EdDSA document generation and verification
+router.post('/generate-document/:type/:prodi', eddsaController.generateSignedDocument);
+router.post('/verify-qr', eddsaController.verifyDocumentFromQR);
+// JSON verification (avoid conflict with HTML verify page below)
+router.get('/verification/:documentId', eddsaController.verifyDocumentById);
+// Signer operations
+router.post('/init-signers/:prodi', eddsaController.initializeSigners);
+// Signed documents
+router.get('/documents', eddsaController.getSignedDocuments);
+router.get('/documents/:documentId/download', eddsaController.downloadSignedDocument);
+// Stats
+router.get('/stats', eddsaController.getVerificationStats);
 
-// Mount EdDSA routes with prefix
-router.use('/eddsa', eddsaRoutes);
+// Management endpoints (signature configs, signers, document configs, fields)
+// Signature configuration
+router.get('/signature-configs', adminController.getSignatureConfigs);
+router.get('/signature-configs/:type', adminController.getSignatureConfig);
+router.post('/signature-configs', adminController.createSignatureConfig);
+router.put('/signature-configs/:type', adminController.updateSignatureConfig);
+router.delete('/signature-configs/:type', adminController.deleteSignatureConfig);
 
-// Mount Admin routes with prefix
-router.use('/admin', adminRoutes);
+// Signers
+router.get('/signers', adminController.getSigners);
+router.get('/signers/:id', adminController.getSigner);
+router.post('/signers', adminController.createSigner);
+router.put('/signers/:id', adminController.updateSigner);
+router.delete('/signers/:id', adminController.deleteSigner);
+
+// Document configurations (renamed to avoid conflict with signed documents)
+router.get('/document-configs', adminController.getDocuments);
+router.get('/document-configs/:id', adminController.getDocument);
+router.post('/document-configs', adminController.createDocument);
+router.put('/document-configs/:id', adminController.updateDocument);
+router.delete('/document-configs/:id', adminController.deleteDocument);
+
+// Document fields management
+router.get('/document-configs/:documentId/fields', adminController.getDocumentFields);
+router.post('/document-configs/:documentId/fields', adminController.createDocumentField);
+router.put('/fields/:fieldId', adminController.updateDocumentField);
+router.delete('/fields/:fieldId', adminController.deleteDocumentField);
 
 // Document config routes
+// Enable document-config endpoints for managing document types/fields
+// const documentConfigRoutes = require('./document-config');
+// If document-config is intended to be exposed, uncomment the next line:
 // router.use('/document-config', documentConfigRoutes);
 
 // ===========================================
@@ -28,22 +67,17 @@ router.use('/admin', adminRoutes);
 
 // Main Dashboard - Modern EdDSA Multi-Signature Interface (Unified Admin)
 router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/admin.html'));
+  res.json({ status: 'OK', message: 'Generate Document API (EdDSA) running' });
 });
 
-// Admin Dashboard - Management Interface (Same as main dashboard)
-router.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/admin.html'));
-});
+// Removed explicit /admin page route to avoid duplicate path
 
-// Legacy Dashboard route - redirect to admin
-router.get('/dashboard', (req, res) => {
-  res.redirect('/');
-});
+// Legacy dashboard route removed
 
 // Document Verification Route (for QR Code scanning)
 router.get('/verify/:documentId', async (req, res) => {
   try {
+    return res.redirect(`/api/verification/${req.params.documentId}`);
     const { documentId } = req.params;
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
@@ -252,112 +286,12 @@ router.get('/verify/:documentId', async (req, res) => {
   }
 });
 
-// Legacy routes for backward compatibility
-// Download endpoint with proper headers
-router.get('/download/:filename', (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join(__dirname, '../templates/output', filename);
-
-  // Set headers for download
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-  // Send file
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Error sending file:', err);
-      res.status(404).json({
-        success: false,
-        message: 'File tidak ditemukan'
-      });
-    }
-  });
-});
-
-// Generate document dengan prodi dinamis (Legacy)
-router.post('/generate-document/:type/:prodi', generateDocument);
-
-// Mendapatkan daftar prodi yang tersedia (Legacy)
-router.get('/templates', getAvailableProdi);
-router.get('/templates/:type', getAvailableProdi);
-
-// Mendapatkan field yang diperlukan untuk template tertentu (Legacy)
-router.get('/templates/:type/:prodi/fields', getRequiredFields);
-
-// API endpoint untuk mendapatkan fields berdasarkan prodi dan type (for admin interface)
-router.get('/api/fields/:prodi/:type', async (req, res) => {
-  try {
-    const { prodi, type } = req.params;
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-
-    // Get document configuration
-    const document = await prisma.documents.findFirst({
-      where: { type, prodi },
-      include: { document_fields: true }
-    });
-
-    if (!document) {
-      return res.json({
-        success: false,
-        error: 'Document configuration not found'
-      });
-    }
-
-    // Transform fields to frontend format
-    const fields = document.document_fields.map(field => ({
-      name: field.field_name,
-      label: field.label || field.field_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      type: field.field_type || 'text',
-      placeholder: field.placeholder || '',
-      required: field.is_required || true
-    }));
-
-    res.json({
-      success: true,
-      data: fields
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Backward compatibility - redirect ke endpoint lama (default ke informatika)
-router.post('/generate-document/:type', (req, res, next) => {
-  req.params.prodi = 'informatika'; // default prodi
-  generateDocument(req, res, next);
-});
-
-// API endpoint untuk mendapatkan statistik (untuk dashboard)
-router.get('/api/stats', async (req, res) => {
-  try {
-    const response = await fetch(`${req.protocol}://${req.get('host')}/api/eddsa/stats`);
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// API endpoint untuk mendapatkan dokumen (untuk dashboard)
-router.get('/api/documents', async (req, res) => {
-  try {
-    const { limit = 10, page = 1 } = req.query;
-    const response = await fetch(`${req.protocol}://${req.get('host')}/api/eddsa/documents?limit=${limit}&page=${page}`);
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+// Remove legacy API endpoints and proxies in favor of unified /eddsa endpoints
 
 // Quick verification endpoint (short URL for QR codes)
 router.get('/v/:documentId', async (req, res) => {
   // Redirect to full verification
-  res.redirect(`/api/eddsa/verify/${req.params.documentId}`);
+  res.redirect(`/api/verification/${req.params.documentId}`);
 });
 
 // Health check

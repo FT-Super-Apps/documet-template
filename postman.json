@@ -1,0 +1,135 @@
+{
+  "info": {
+    "name": "Unified Admin API",
+    "description": "Koleksi Postman untuk semua endpoint API yang sudah disatukan dan berbasis EdDSA. Router dimount di '/' dan '/api', koleksi ini menggunakan base `{{host}}/api`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "host", "value": "http://localhost:8080" },
+    { "key": "baseUrl", "value": "{{host}}/api" },
+    { "key": "type", "value": "kkp" },
+    { "key": "prodi", "value": "informatika" },
+    { "key": "documentId", "value": "REPLACE_WITH_DOCUMENT_ID" },
+    { "key": "signerId", "value": "1" },
+    { "key": "docConfigId", "value": "1" },
+    { "key": "fieldId", "value": "1" },
+    { "key": "limit", "value": "10" },
+    { "key": "page", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Documents (Signed)",
+      "item": [
+        {
+          "name": "Generate Signed Document",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_mahasiswa\": \"Budi\",\n  \"nim\": \"123456789\",\n  \"judul\": \"Judul Dokumen\",\n  \"_metadata\": {\n    \"template_path\": \"templates/{{prodi}}/{{type}}.docx\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/generate-document/{{type}}/{{prodi}}",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "generate-document", "{{type}}", "{{prodi}}" ]
+            }
+          }
+        },
+        {
+          "name": "Verify via QR (payload)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrData\": {\n    \"documentId\": \"{{documentId}}\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/verify-qr", "host": ["{{baseUrl}}"], "path": ["verify-qr"] }
+          }
+        },
+        {
+          "name": "Verify by ID (JSON)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/verification/{{documentId}}", "host": ["{{baseUrl}}"], "path": ["verification", "{{documentId}}"] } }
+        },
+        {
+          "name": "Initialize Signers",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/init-signers/{{prodi}}", "host": ["{{baseUrl}}"], "path": ["init-signers", "{{prodi}}"] } }
+        },
+        {
+          "name": "List Signed Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/documents?limit={{limit}}&page={{page}}&prodi={{prodi}}&type={{type}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"],
+              "query": [
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "page", "value": "{{page}}" },
+                { "key": "prodi", "value": "{{prodi}}" },
+                { "key": "type", "value": "{{type}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Signed Document",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/documents/{{documentId}}/download", "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "download"] } }
+        },
+        {
+          "name": "Stats",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/stats", "host": ["{{baseUrl}}"], "path": ["stats"] } }
+        }
+      ]
+    },
+    {
+      "name": "Management: Signature Configs",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/signature-configs?active_only=false", "host": ["{{baseUrl}}"], "path": ["signature-configs"], "query": [{"key":"active_only","value":"false"}] } } },
+        { "name": "Get by Type", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/signature-configs/{{type}}", "host": ["{{baseUrl}}"], "path": ["signature-configs", "{{type}}"] } } },
+        { "name": "Create", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"document_type\": \"{{type}}\",\n  \"required_signature_count\": 3,\n  \"required_roles\": [\n    \"dosen_pembimbing\",\n    \"ketua_prodi\",\n    \"dekan\"\n  ],\n  \"description\": \"Signature config for {{type}}\"\n}"}, "url": { "raw": "{{baseUrl}}/signature-configs", "host": ["{{baseUrl}}"], "path": ["signature-configs"] } } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"required_signature_count\": 3,\n  \"required_roles\": [\n    \"dosen_pembimbing\",\n    \"ketua_prodi\",\n    \"dekan\"\n  ],\n  \"description\": \"Updated signature config for {{type}}\"\n}"}, "url": { "raw": "{{baseUrl}}/signature-configs/{{type}}", "host": ["{{baseUrl}}"], "path": ["signature-configs", "{{type}}"] } } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/signature-configs/{{type}}", "host": ["{{baseUrl}}"], "path": ["signature-configs", "{{type}}"] } } }
+      ]
+    },
+    {
+      "name": "Management: Signers",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/signers", "host": ["{{baseUrl}}"], "path": ["signers"] } } },
+        { "name": "Get", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/signers/{{signerId}}", "host": ["{{baseUrl}}"], "path": ["signers", "{{signerId}}"] } } },
+        { "name": "Create", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"name\": \"Dr. Pembimbing IF\",\n  \"nip\": \"123456789\",\n  \"role\": \"dosen_pembimbing\",\n  \"department\": \"Fakultas Teknik\",\n  \"prodi\": \"{{prodi}}\"\n}"}, "url": { "raw": "{{baseUrl}}/signers", "host": ["{{baseUrl}}"], "path": ["signers"] } } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"name\": \"Dr. Pembimbing IF Updated\",\n  \"regenerate_keys\": false,\n  \"is_active\": true\n}"}, "url": { "raw": "{{baseUrl}}/signers/{{signerId}}", "host": ["{{baseUrl}}"], "path": ["signers", "{{signerId}}"] } } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/signers/{{signerId}}?hard_delete=false", "host": ["{{baseUrl}}"], "path": ["signers", "{{signerId}}"], "query": [{"key":"hard_delete","value":"false"}] } } }
+      ]
+    },
+    {
+      "name": "Management: Document Configs",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/document-configs?type={{type}}&prodi={{prodi}}", "host": ["{{baseUrl}}"], "path": ["document-configs"], "query": [{"key":"type","value":"{{type}}"},{"key":"prodi","value":"{{prodi}}"}] } } },
+        { "name": "Get", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/document-configs/{{docConfigId}}", "host": ["{{baseUrl}}"], "path": ["document-configs", "{{docConfigId}}"] } } },
+        { "name": "Create", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"type\": \"{{type}}\",\n  \"prodi\": \"{{prodi}}\",\n  \"template_path\": \"templates/{{prodi}}/{{type}}.docx\",\n  \"description\": \"{{type}} document for {{prodi}}\",\n  \"fields\": [\n    { \"field_name\": \"nama_mahasiswa\", \"field_type\": \"text\", \"is_required\": true },\n    { \"field_name\": \"nim\", \"field_type\": \"text\", \"is_required\": true }\n  ]\n}"}, "url": { "raw": "{{baseUrl}}/document-configs", "host": ["{{baseUrl}}"], "path": ["document-configs"] } } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"template_path\": \"templates/{{prodi}}/{{type}}.docx\",\n  \"description\": \"Updated description\"\n}"}, "url": { "raw": "{{baseUrl}}/document-configs/{{docConfigId}}", "host": ["{{baseUrl}}"], "path": ["document-configs", "{{docConfigId}}"] } } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/document-configs/{{docConfigId}}", "host": ["{{baseUrl}}"], "path": ["document-configs", "{{docConfigId}}"] } } }
+      ]
+    },
+    {
+      "name": "Management: Document Fields",
+      "item": [
+        { "name": "List for Document", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/document-configs/{{docConfigId}}/fields", "host": ["{{baseUrl}}"], "path": ["document-configs", "{{docConfigId}}", "fields"] } } },
+        { "name": "Create Field", "request": { "method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"field_name\": \"judul\",\n  \"field_type\": \"text\",\n  \"is_required\": true,\n  \"default_value\": \"\"\n}"}, "url": { "raw": "{{baseUrl}}/document-configs/{{docConfigId}}/fields", "host": ["{{baseUrl}}"], "path": ["document-configs", "{{docConfigId}}", "fields"] } } },
+        { "name": "Update Field", "request": { "method": "PUT", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n  \"field_name\": \"judul\",\n  \"is_required\": true\n}"}, "url": { "raw": "{{baseUrl}}/fields/{{fieldId}}", "host": ["{{baseUrl}}"], "path": ["fields", "{{fieldId}}"] } } },
+        { "name": "Delete Field", "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/fields/{{fieldId}}", "host": ["{{baseUrl}}"], "path": ["fields", "{{fieldId}}"] } } }
+      ]
+    },
+    {
+      "name": "Utility",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] } } },
+        { "name": "Quick Verify Redirect", "request": { "method": "GET", "header": [], "url": { "raw": "{{host}}/v/{{documentId}}", "host": ["{{host}}"], "path": ["v", "{{documentId}}"] } } }
+      ]
+    }
+  ]
+}
+

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const route = require('./routes/index');
@@ -9,15 +10,16 @@ const cors = require('cors');
 server.use('/templates', express.static(path.join(__dirname, 'templates')));
 // Serve output documents for download
 server.use('/download', express.static(path.join(__dirname, 'templates/output')));
-// Serve public files (dashboard.html)
-server.use(express.static(path.join(__dirname, 'public')));
+// Frontend removed; no public static directory
 
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 server.use(cors());
 
 // Main routes (including dashboard)
-server.use('/', route);
+server.use('/', (req, res) => {
+  res.json({ status: 'OK', message: 'Generate Document API (EdDSA) running' });
+});
 // API routes  
 server.use('/api', route);
 

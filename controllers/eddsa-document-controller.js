@@ -1,7 +1,7 @@
 // controllers/eddsa-document-controller.js
 const { PrismaClient } = require('@prisma/client');
 const { EdDSACrypto, MultiSignatureManager } = require('../utils/eddsa-crypto');
-const { getSignatureRequirements, getSignatureRequirementsFromDB, isValidDocumentType } = require('../config/document-signature-config');
+const { getSignatureRequirements, getSignatureRequirementsFromDB, isValidDocumentTypeAsync } = require('../config/document-signature-config');
 const generateDocumentUtil = require('../utils/generate-document');
 const { generateQRCodeWithSignature } = require('../utils/generate-qrcode-enhanced');
 const fs = require('fs-extra');
@@ -9,6 +9,20 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 const prisma = new PrismaClient();
+
+function getVerifyAppBaseUrl() {
+  const raw = process.env.VERIFY_APP_BASE_URL || 'http://localhost:3000';
+  try {
+    // Validate URL; if invalid, fallback
+    const u = new URL(raw.startsWith('http') ? raw : `http://${raw}`);
+    // Remove trailing slash for clean concatenation
+    const sanitized = `${u.origin}${u.pathname}`.replace(/\/+$/, '');
+    return sanitized;
+  } catch (e) {
+    console.warn(`Invalid VERIFY_APP_BASE_URL '${raw}', falling back to http://localhost:3000`);
+    return 'http://localhost:3000';
+  }
+}
 
 class EdDSADocumentController {
   constructor() {
@@ -25,11 +39,11 @@ class EdDSADocumentController {
 
       console.log(`🔐 Generating signed document: ${type} for ${prodi}`);
 
-      // 1. Validate document type
-      if (!isValidDocumentType(type)) {
+      // 1. Validate document type (DB-first, fallback to static)
+      if (!(await isValidDocumentTypeAsync(type))) {
         return res.status(400).json({
           success: false,
-          error: `Invalid document type: ${type}. Supported types: kkp, kkplus, bimbingan`
+          error: `Invalid document type: ${type}. Please configure signature requirements first.`
         });
       }
 
@@ -111,8 +125,9 @@ class EdDSADocumentController {
       );
       // 9. Create QR code data with verification URL
       const documentId = uuidv4();
-      const baseUrl = process.env.BASE_URL || 'http://localhost:8080';
-      const verificationUrl = `${baseUrl}/verify/${documentId}`;
+      // Build QR link to external verification UI (not API)
+      const verifyAppBase = getVerifyAppBaseUrl();
+      const verificationUrl = `${verifyAppBase}/document/verifikasi/${documentId}`;
 
       const qrData = {
         documentId: documentId,
@@ -189,7 +204,7 @@ class EdDSADocumentController {
           isComplete: multiSig.isComplete,
           filePath: outputPath,
           qrData: qrData,
-          verificationUrl: `${req.protocol}://${req.get('host')}/api/eddsa/verify/${signedDoc.id}`
+          verificationUrl: qrData.verificationUrl
         }
       });
 

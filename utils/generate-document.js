@@ -8,7 +8,8 @@ const ImageModule = require('docxtemplater-image-module-free');
 
 const generateDocument = async (type, prodi, data) => {
   try {
-    const no_surat = await lastNumber(type);
+    // Use provided no_surat if available (e.g., from EdDSA flow), fallback to generator
+    const no_surat = data?.no_surat ? String(data.no_surat) : await lastNumber(type);
 
     // Gunakan template path dari metadata jika ada, fallback ke path lama
     const templatePath = data._metadata?.template_path
@@ -23,9 +24,13 @@ const generateDocument = async (type, prodi, data) => {
     const templateContent = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(templateContent);
 
-    const qrCodePath = await generateQRCodeWithImage(
-      `${no_surat},${data.nama_ttd || 'Unknown'},${prodi}`
-    );
+    // Prefer provided QR code path (from EdDSA), fallback to legacy QR content
+    let qrCodePath = data?.qr_code_path;
+    if (!qrCodePath || !fs.existsSync(qrCodePath)) {
+      qrCodePath = await generateQRCodeWithImage(
+        `${no_surat},${data?.nama_ttd || 'Unknown'},${prodi}`
+      );
+    }
 
     const imageModuleOpts = {
       centered: true,

@@ -37,11 +37,13 @@ const DOCUMENT_SIGNATURE_CONFIG = {
  */
 async function getSignatureRequirementsFromDB(documentType) {
   try {
-    const config = await prisma.document_signature_config.findUnique({
+    // Prefer active config from DB if available
+    const config = await prisma.document_signature_config.findFirst({
       where: {
         document_type: documentType.toLowerCase(),
         is_active: true
-      }
+      },
+      orderBy: { updated_at: 'desc' }
     });
 
     if (config) {
@@ -74,6 +76,38 @@ function getSignatureRequirements(documentType) {
 }
 
 /**
+ * Validate if a document type is supported using database (fallback to static)
+ * @param {string} documentType
+ * @returns {Promise<boolean>}
+ */
+async function isValidDocumentTypeAsync(documentType) {
+  try {
+    const found = await prisma.document_signature_config.findFirst({
+      where: { document_type: documentType.toLowerCase(), is_active: true }
+    });
+    if (found) return true;
+  } catch (_) { /* ignore and fallback */ }
+  return isValidDocumentType(documentType);
+}
+
+/**
+ * Get supported document types from DB (fallback to static)
+ * @returns {Promise<string[]>}
+ */
+async function getSupportedDocumentTypesFromDB() {
+  try {
+    const rows = await prisma.document_signature_config.findMany({
+      where: { is_active: true },
+      select: { document_type: true },
+      orderBy: { document_type: 'asc' }
+    });
+    const unique = Array.from(new Set(rows.map(r => r.document_type)));
+    if (unique.length) return unique;
+  } catch (_) { /* ignore and fallback */ }
+  return getSupportedDocumentTypes();
+}
+
+/**
  * Validate if a document type is supported
  * @param {string} documentType - The type of document to validate
  * @returns {boolean} True if supported, false otherwise
@@ -103,6 +137,8 @@ module.exports = {
   getSignatureRequirements,
   getSignatureRequirementsFromDB,
   isValidDocumentType,
+  isValidDocumentTypeAsync,
   getSupportedDocumentTypes,
+  getSupportedDocumentTypesFromDB,
   getAllSignatureRequirements
 };
