@@ -22,6 +22,7 @@ async function seedDocuments() {
           { field_name: 'kepada', field_type: 'string', is_required: true, default_value: null },
           { field_name: 'tempat_tujuan', field_type: 'string', is_required: true, default_value: null },
           { field_name: 'nama_prodi', field_type: 'string', is_required: false, default_value: 'Informatika' },
+          { field_name: 'nama_ttd', field_type: 'string', is_required: true, default_value: null },
           { field_name: 'tanggal_hijriyah', field_type: 'date_hijriyah', is_required: false, default_value: null },
           { field_name: 'tanggal_masehi', field_type: 'date_masehi', is_required: false, default_value: null },
           { field_name: 'tableData', field_type: 'table', is_required: true, default_value: null },

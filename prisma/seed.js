@@ -18,7 +18,8 @@ async function main() {
       fields: [
         { field_name: 'kepada', field_type: 'text', is_required: true },
         { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Teknik Informatika' },
+        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Informatika' },
+        { field_name: 'nama_ttd', field_type: 'text', is_required: true },
         { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
         { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
         { field_name: 'tableData', field_type: 'array', is_required: true }

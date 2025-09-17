@@ -77,7 +77,7 @@ router.get('/', (req, res) => {
 // Document Verification Route (for QR Code scanning)
 router.get('/verify/:documentId', async (req, res) => {
   try {
-    return res.redirect(`/api/verification/${req.params.documentId}`);
+    return res.redirect(`/verification/${req.params.documentId}`);
     const { documentId } = req.params;
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
@@ -297,13 +297,13 @@ router.get('/v/:documentId', async (req, res) => {
 // Health check
 router.get('/health', (req, res) => {
   res.json({
-    status: 'OK',
+    status: 'healthy',
     timestamp: new Date().toISOString(),
+    database: 'connected',
     services: {
-      database: 'connected',
-      eddsa: 'enabled',
-      multisignature: 'enabled',
-      qr_generation: 'enabled'
+      eddsa: 'up',
+      multisignature: 'up',
+      qr_generation: 'up'
     }
   });
 });
