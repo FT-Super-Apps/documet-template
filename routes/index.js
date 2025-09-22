@@ -1,6 +1,7 @@
 
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const router = express.Router();
 // Unified controllers (EdDSA + Admin management)
 const EdDSADocumentController = require('../controllers/eddsa-document-controller');
@@ -13,17 +14,60 @@ const AdminController = require('../controllers/admin-controller');
 const eddsaController = new EdDSADocumentController();
 const adminController = new AdminController();
 
+// Configure multer for template uploads
+const templateUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const { type, prodi } = req.params;
+      const templateDir = path.join(__dirname, '../templates', prodi);
+
+      // Ensure directory exists
+      const fs = require('fs-extra');
+      fs.ensureDirSync(templateDir);
+      cb(null, templateDir);
+    },
+    filename: (req, file, cb) => {
+      const { type } = req.params;
+      // Keep original extension
+      const ext = path.extname(file.originalname);
+      cb(null, `${type}${ext}`);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    // Only allow .docx files
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      path.extname(file.originalname).toLowerCase() === '.docx') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .docx files are allowed!'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
 // All API endpoints unified at root (router is mounted under / and /api by server)
 // EdDSA document generation and verification
 router.post('/generate-document/:type/:prodi', eddsaController.generateSignedDocument);
 router.post('/verify-qr', eddsaController.verifyDocumentFromQR);
 // JSON verification (avoid conflict with HTML verify page below)
 router.get('/verification/:documentId', eddsaController.verifyDocumentById);
+// Document analysis for verification
+router.post('/analyze-document', templateUpload.single('document'), eddsaController.analyzeDocument);
 // Signer operations
 router.post('/init-signers/:prodi', eddsaController.initializeSigners);
 // Signed documents
 router.get('/documents', eddsaController.getSignedDocuments);
+router.get('/documents/:documentId', eddsaController.getSignedDocument);
 router.get('/documents/:documentId/download', eddsaController.downloadSignedDocument);
+// Template upload and management
+router.post('/templates/upload/:type/:prodi', templateUpload.single('template'), eddsaController.uploadTemplate);
+router.get('/templates', eddsaController.getTemplates);
+router.delete('/templates/:type/:prodi', eddsaController.deleteTemplate);
+
+// Signers management for template configuration
+router.get('/signers', eddsaController.getSigners);
 // Stats
 router.get('/stats', eddsaController.getVerificationStats);
 
@@ -54,6 +98,12 @@ router.get('/document-configs/:documentId/fields', adminController.getDocumentFi
 router.post('/document-configs/:documentId/fields', adminController.createDocumentField);
 router.put('/fields/:fieldId', adminController.updateDocumentField);
 router.delete('/fields/:fieldId', adminController.deleteDocumentField);
+
+// Document types management (jenis dokumen)
+router.get('/document-types', adminController.getDocumentTypes);
+router.post('/document-types', adminController.createDocumentType);
+router.put('/document-types/:type', adminController.updateDocumentType);
+router.delete('/document-types/:type', adminController.deleteDocumentType);
 
 // Document config routes
 // Enable document-config endpoints for managing document types/fields

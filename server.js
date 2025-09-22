@@ -1,10 +1,40 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const route = require('./routes/index');
 const server = express();
 const PORT = 8080;
 const cors = require('cors');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const { prodi } = req.params;
+    const uploadPath = path.join(__dirname, 'templates', prodi);
+    require('fs-extra').ensureDirSync(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const { type } = req.params;
+    cb(null, `${type}.docx`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .docx files are allowed!'), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Make upload middleware available to routes
+server.set('upload', upload);
 
 // Static files
 server.use('/templates', express.static(path.join(__dirname, 'templates')));

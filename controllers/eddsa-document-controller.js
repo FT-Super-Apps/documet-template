@@ -7,6 +7,7 @@ const { generateQRCodeWithSignature } = require('../utils/generate-qrcode-enhanc
 const fs = require('fs-extra');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 
 const prisma = new PrismaClient();
 
@@ -449,6 +450,169 @@ class EdDSADocumentController {
     }
   };
 
+  getSignedDocument = async (req, res) => {
+    try {
+      const { documentId } = req.params;
+
+      console.log(`📄 Getting document details for ID: ${documentId}`);
+
+      const document = await prisma.signed_documents.findUnique({
+        where: { id: documentId },
+        include: {
+          document_signatures: {
+            include: {
+              signer: {
+                select: {
+                  id: true,
+                  name: true,
+                  role: true,
+                  nip: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: 'Document not found'
+        });
+      }
+
+      // Parse document content
+      let parsedContent = {};
+      try {
+        if (document.document_content) {
+          parsedContent = JSON.parse(document.document_content);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to parse document content:', error.message);
+      }
+
+      // Extract student data from parsed content
+      let nama_mahasiswa = 'N/A';
+      let nim = 'N/A';
+      let judul = 'N/A';
+
+      if (parsedContent.nama_mahasiswa) {
+        nama_mahasiswa = parsedContent.nama_mahasiswa;
+      } else if (parsedContent.tableData && parsedContent.tableData.length > 0) {
+        nama_mahasiswa = parsedContent.tableData[0].nama || 'N/A';
+      }
+
+      if (parsedContent.nim) {
+        nim = parsedContent.nim;
+      } else if (parsedContent.tableData && parsedContent.tableData.length > 0) {
+        nim = parsedContent.tableData[0].nim || 'N/A';
+      }
+
+      if (parsedContent.judul) {
+        judul = parsedContent.judul;
+      }
+
+      // Transform document for frontend
+      const transformedDocument = {
+        ...document,
+        type: document.document_type,
+        document_type: document.document_type,
+        signed_at: document.completed_at,
+        status: document.completed_at ? 'signed' : 'pending',
+        documentId: document.id,
+        nama_mahasiswa,
+        nim,
+        judul,
+        updated_at: document.created_at,
+        qr_code: document.qr_code_data,
+        download_url: `/api/documents/${document.id}/download`,
+        // Include signature details
+        signatures: document.document_signatures.map(sig => ({
+          id: sig.id,
+          signer: sig.signer,
+          signature_data: sig.signature_data,
+          signed_at: sig.signed_at,
+          signature_metadata: sig.signature_metadata ? JSON.parse(sig.signature_metadata) : null
+        }))
+      };
+
+      res.json({
+        success: true,
+        data: transformedDocument
+      });
+
+    } catch (error) {
+      console.error('❌ Error getting document details:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
+  /**
+   * Analyze uploaded document to extract document ID
+   */
+  analyzeDocument = async (req, res) => {
+    try {
+      console.log('📋 Analyzing uploaded document...');
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No document file uploaded'
+        });
+      }
+
+      const file = req.file;
+      console.log(`📄 Processing file: ${file.originalname} (${file.mimetype})`);
+
+      // For now, this is a placeholder implementation
+      // In a real implementation, this would:
+      // 1. Extract metadata from the document using libraries like:
+      //    - mammoth (for .docx files)
+      //    - pdf-parse (for .pdf files)
+      // 2. Search for document ID patterns in the content
+      // 3. Look for embedded metadata or watermarks
+      // 4. Return the found document ID
+
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // For demonstration, we'll return a simulated response
+      // In reality, you would implement actual document analysis
+      console.log('📋 Document analysis not yet implemented');
+
+      res.json({
+        success: false,
+        error: 'Fitur analisis dokumen belum tersedia. Silakan gunakan Document ID manual atau QR Code untuk verifikasi.',
+        data: {
+          filename: file.originalname,
+          size: file.size,
+          type: file.mimetype,
+          message: 'Document uploaded successfully but analysis feature is not yet implemented'
+        }
+      });
+
+      // Clean up uploaded file
+      if (file.path) {
+        const fs = require('fs');
+        try {
+          fs.unlinkSync(file.path);
+        } catch (cleanupError) {
+          console.warn('⚠️ Failed to cleanup uploaded file:', cleanupError.message);
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Error analyzing document:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
   /**
    * Download signed document
    */
@@ -558,10 +722,10 @@ class EdDSADocumentController {
 
     // Check if this is a basic document (no signature verification needed)
     const isBasicDocument = document.total_signatures_required === 0;
-    
+
     if (isBasicDocument) {
       console.log(`🔍 Verifying basic document ${documentId} of type ${document.document_type}`);
-      
+
       // For basic documents, just verify document integrity
       let documentHash = '';
       try {
@@ -760,6 +924,253 @@ class EdDSADocumentController {
     const randomSuffix = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
     return (base[role] || '199001') + randomSuffix;
   }
+
+  /**
+   * Get verification statistics
+   */
+  getVerificationStats = async (req, res) => {
+    try {
+      const totalDocuments = await prisma.signed_documents.count();
+      const signedDocuments = await prisma.signed_documents.count({
+        where: { is_complete: true }
+      });
+      const pendingDocuments = totalDocuments - signedDocuments;
+      const activeSigners = await prisma.signers.count({
+        where: { is_active: true }
+      });
+      const totalSigners = await prisma.signers.count();
+
+      const documentTypes = await prisma.signed_documents.groupBy({
+        by: ['document_type'],
+        _count: { document_type: true }
+      });
+
+      const recentDocuments = await prisma.signed_documents.findMany({
+        take: 10,
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          document_type: true,
+          prodi: true,
+          document_content: true,
+          no_surat: true,
+          created_at: true,
+          is_complete: true,
+          total_signatures_required: true,
+          total_signatures_received: true
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          total_documents: totalDocuments,
+          signed_documents: signedDocuments,
+          pending_documents: pendingDocuments,
+          active_signers: activeSigners,
+          total_signers: totalSigners,
+          document_types: documentTypes.map(dt => ({
+            type: dt.document_type,
+            count: dt._count.document_type
+          })),
+          recent_documents: recentDocuments.map(doc => {
+            // Parse document content to extract judul and nama_mahasiswa
+            let parsedContent = {};
+            try {
+              parsedContent = JSON.parse(doc.document_content);
+            } catch (error) {
+              parsedContent = { judul: 'Unknown Document', nama_mahasiswa: 'Unknown Student' };
+            }
+
+            return {
+              id: doc.id,
+              judul: parsedContent.judul || parsedContent.title || doc.no_surat || 'Dokumen Tanpa Judul',
+              nama_mahasiswa: parsedContent.nama_mahasiswa || parsedContent.nama || parsedContent.student_name || 'Mahasiswa Tidak Diketahui',
+              type: doc.document_type,
+              prodi: doc.prodi,
+              created_at: doc.created_at,
+              status: doc.is_complete ? 'completed' : 'pending',
+              signatures_progress: `${doc.total_signatures_received}/${doc.total_signatures_required}`
+            };
+          })
+        }
+      });
+    } catch (error) {
+      console.error('Error getting verification stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get verification statistics'
+      });
+    }
+  };
+
+  /**
+   * Upload document template with signature configuration
+   */
+  uploadTemplate = async (req, res) => {
+    try {
+      const { type, prodi } = req.params;
+      const { config } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'No template file uploaded'
+        });
+      }
+
+      // Parse configuration if provided
+      let signatureConfig = null;
+      if (config) {
+        try {
+          signatureConfig = JSON.parse(config);
+        } catch (parseError) {
+          console.warn('Invalid config format:', parseError);
+        }
+      }
+
+      // Save template info to database (mock implementation)
+      const templateData = {
+        id: `tpl_${Date.now()}`,
+        type,
+        prodi,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        signature_config: signatureConfig,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Template uploaded:', templateData);
+
+      res.json({
+        success: true,
+        message: `Template for ${type} document (${prodi}) uploaded successfully`,
+        data: templateData
+      });
+    } catch (error) {
+      console.error('Error uploading template:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to upload template'
+      });
+    }
+  };
+
+  /**
+   * Get signers for template configuration
+   */
+  getSigners = async (req, res) => {
+    try {
+      const { prodi } = req.query;
+
+      // Get all signers from database
+      const signers = await prisma.signers.findMany({
+        where: prodi ? { prodi } : {},
+        orderBy: { name: 'asc' }
+      });
+
+      res.json({
+        success: true,
+        data: signers.map(signer => ({
+          id: signer.id,
+          name: signer.name,
+          nip: signer.nip,
+          role: signer.role,
+          department: signer.department,
+          prodi: signer.prodi,
+          is_active: signer.is_active,
+          created_at: signer.created_at,
+          updated_at: signer.updated_at
+        }))
+      });
+    } catch (error) {
+      console.error('Error getting signers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get signers'
+      });
+    }
+  };
+
+  /**
+   * Get available templates
+   */
+  getTemplates = async (req, res) => {
+    try {
+      const templatesDir = path.join(__dirname, '../templates');
+      const templates = [];
+
+      // Read all prodi directories
+      const prodiDirs = await fs.readdir(templatesDir, { withFileTypes: true });
+
+      for (const prodiDir of prodiDirs) {
+        if (prodiDir.isDirectory() && prodiDir.name !== 'output' && prodiDir.name !== 'qr-code') {
+          const prodiPath = path.join(templatesDir, prodiDir.name);
+          const templateFiles = await fs.readdir(prodiPath);
+
+          for (const file of templateFiles) {
+            if (file.endsWith('.docx')) {
+              const type = path.parse(file).name;
+              const stats = await fs.stat(path.join(prodiPath, file));
+
+              templates.push({
+                type,
+                prodi: prodiDir.name,
+                filename: file,
+                size: stats.size,
+                modified: stats.mtime
+              });
+            }
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        data: templates
+      });
+    } catch (error) {
+      console.error('Error getting templates:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get templates'
+      });
+    }
+  };
+
+  /**
+   * Delete document template
+   */
+  deleteTemplate = async (req, res) => {
+    try {
+      const { type, prodi } = req.params;
+      const templatePath = path.join(__dirname, '../templates', prodi, `${type}.docx`);
+
+      // Check if template exists
+      if (!(await fs.pathExists(templatePath))) {
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found'
+        });
+      }
+
+      // Delete template file
+      await fs.remove(templatePath);
+
+      res.json({
+        success: true,
+        message: `Template for ${type} document (${prodi}) deleted successfully`
+      });
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete template'
+      });
+    }
+  };
 }
 
 module.exports = EdDSADocumentController;

@@ -965,6 +965,235 @@ class AdminController {
       });
     }
   };
+
+  // ================================
+  // DOCUMENT TYPES MANAGEMENT
+  // ================================
+
+  /**
+   * Get all document types
+   */
+  getDocumentTypes = async (req, res) => {
+    try {
+      const { active_only } = req.query;
+
+      const whereClause = active_only === 'true' ? { is_active: true } : {};
+
+      const documentTypes = await prisma.document_signature_config.findMany({
+        where: whereClause,
+        orderBy: { document_type: 'asc' },
+        select: {
+          id: true,
+          document_type: true,
+          required_signature_count: true,
+          required_roles: true,
+          description: true,
+          is_active: true,
+          created_at: true,
+          updated_at: true
+        }
+      });
+
+      res.json({
+        success: true,
+        message: `Found ${documentTypes.length} document types`,
+        data: documentTypes
+      });
+    } catch (error) {
+      console.error('Error getting document types:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to get document types: ${error.message}`
+      });
+    }
+  };
+
+  /**
+   * Create new document type
+   */
+  createDocumentType = async (req, res) => {
+    try {
+      const {
+        document_type,
+        required_signature_count = 1,
+        required_roles = [],
+        description = null,
+        is_active = true
+      } = req.body;
+
+      // Validate required fields
+      if (!document_type) {
+        return res.status(400).json({
+          success: false,
+          error: 'Document type is required'
+        });
+      }
+
+      // Check if document type already exists
+      const existingType = await prisma.document_signature_config.findUnique({
+        where: { document_type }
+      });
+
+      if (existingType) {
+        return res.status(400).json({
+          success: false,
+          error: `Document type '${document_type}' already exists`
+        });
+      }
+
+      // Validate required_roles array
+      if (!Array.isArray(required_roles)) {
+        return res.status(400).json({
+          success: false,
+          error: 'required_roles must be an array'
+        });
+      }
+
+      // Create new document type
+      const newDocumentType = await prisma.document_signature_config.create({
+        data: {
+          document_type: document_type.toLowerCase(),
+          required_signature_count: parseInt(required_signature_count),
+          required_roles,
+          description,
+          is_active
+        }
+      });
+
+      console.log(`✅ Document type created: ${document_type}`);
+
+      res.status(201).json({
+        success: true,
+        message: `Document type '${document_type}' created successfully`,
+        data: newDocumentType
+      });
+    } catch (error) {
+      console.error('Error creating document type:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to create document type: ${error.message}`
+      });
+    }
+  };
+
+  /**
+   * Update document type
+   */
+  updateDocumentType = async (req, res) => {
+    try {
+      const { type } = req.params;
+      const {
+        required_signature_count,
+        required_roles,
+        description,
+        is_active
+      } = req.body;
+
+      // Check if document type exists
+      const existingType = await prisma.document_signature_config.findUnique({
+        where: { document_type: type }
+      });
+
+      if (!existingType) {
+        return res.status(404).json({
+          success: false,
+          error: `Document type '${type}' not found`
+        });
+      }
+
+      // Build update data
+      const updateData = {};
+      if (required_signature_count !== undefined) {
+        updateData.required_signature_count = parseInt(required_signature_count);
+      }
+      if (required_roles !== undefined) {
+        if (!Array.isArray(required_roles)) {
+          return res.status(400).json({
+            success: false,
+            error: 'required_roles must be an array'
+          });
+        }
+        updateData.required_roles = required_roles;
+      }
+      if (description !== undefined) {
+        updateData.description = description;
+      }
+      if (is_active !== undefined) {
+        updateData.is_active = is_active;
+      }
+
+      // Update document type
+      const updatedDocumentType = await prisma.document_signature_config.update({
+        where: { document_type: type },
+        data: updateData
+      });
+
+      console.log(`✅ Document type updated: ${type}`);
+
+      res.json({
+        success: true,
+        message: `Document type '${type}' updated successfully`,
+        data: updatedDocumentType
+      });
+    } catch (error) {
+      console.error('Error updating document type:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to update document type: ${error.message}`
+      });
+    }
+  };
+
+  /**
+   * Delete document type
+   */
+  deleteDocumentType = async (req, res) => {
+    try {
+      const { type } = req.params;
+
+      // Check if document type exists
+      const existingType = await prisma.document_signature_config.findUnique({
+        where: { document_type: type }
+      });
+
+      if (!existingType) {
+        return res.status(404).json({
+          success: false,
+          error: `Document type '${type}' not found`
+        });
+      }
+
+      // Check if there are any signed documents using this type
+      const documentsUsingType = await prisma.signed_documents.count({
+        where: { document_type: type }
+      });
+
+      if (documentsUsingType > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot delete document type '${type}' because ${documentsUsingType} documents are using it`
+        });
+      }
+
+      // Delete document type
+      await prisma.document_signature_config.delete({
+        where: { document_type: type }
+      });
+
+      console.log(`🗑️ Document type deleted: ${type}`);
+
+      res.json({
+        success: true,
+        message: `Document type '${type}' deleted successfully`
+      });
+    } catch (error) {
+      console.error('Error deleting document type:', error);
+      res.status(500).json({
+        success: false,
+        error: `Failed to delete document type: ${error.message}`
+      });
+    }
+  };
 }
 
 module.exports = AdminController;
