@@ -52,7 +52,7 @@ async function seedEdDSASystem() {
     // 2. Create signers for each prodi
     console.log('👥 Creating signers for each prodi...');
 
-    const prodis = ['informatika', 'elektro', 'arsitektur', 'pengairan', 'pwk'];
+    const prodis = ['informatika', 'teknik-elektro', 'arsitektur', 'teknik-sipil', 'perencanaan-wilayah-kota'];
     const manager = new MultiSignatureManager();
 
     for (const prodi of prodis) {

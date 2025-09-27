@@ -479,6 +479,194 @@ class EdDSADocumentService {
     return signedDoc;
   }
 
+  /**
+   * Mendapatkan document fields berdasarkan tipe dokumen dan prodi
+   * @param {string} type - Tipe dokumen (kkp, kkplus, bimbingan, etc.)
+   * @param {string} prodi - Nama prodi 
+   * @returns {Object}
+   */
+  async getDocumentFields(type, prodi) {
+    try {
+      // Cari dokumen berdasarkan type dan prodi
+      const document = await prisma.documents.findFirst({
+        where: {
+          type: type,
+          prodi: prodi,
+          is_active: true
+        },
+        include: {
+          document_fields: {
+            where: { is_active: true },
+            orderBy: { display_order: 'asc' }
+          },
+          document_templates: {
+            where: { is_default: true }
+          }
+        }
+      });
+
+      if (!document) {
+        throw new Error(`Dokumen dengan tipe '${type}' untuk prodi '${prodi}' tidak ditemukan`);
+      }
+
+      // Format response dengan informasi field yang lebih detail
+      const formattedFields = document.document_fields.map(field => {
+        let validationRules = {};
+        try {
+          validationRules = field.validation_rules ? JSON.parse(field.validation_rules) : {};
+        } catch (e) {
+          validationRules = {};
+        }
+
+        return {
+          id: field.id,
+          field_name: field.field_name,
+          field_type: field.field_type,
+          is_required: field.is_required,
+          default_value: field.default_value,
+          validation_rules: validationRules,
+          help_text: field.help_text,
+          display_order: field.display_order
+        };
+      });
+
+      return {
+        success: true,
+        data: {
+          document: {
+            id: document.id,
+            type: document.type,
+            prodi: document.prodi,
+            description: document.description,
+            version: document.version,
+            template_path: document.template_path,
+            max_filesize_mb: document.max_filesize_mb
+          },
+          fields: formattedFields,
+          template: document.document_templates[0] || null,
+          total_fields: formattedFields.length
+        }
+      };
+    } catch (error) {
+      throw new Error(`Gagal mendapatkan document fields: ${error.message}`);
+    }
+  }
+
+  /**
+   * Mendapatkan semua tipe dokumen yang tersedia
+   * @param {string} prodi - Optional, filter berdasarkan prodi
+   * @returns {Object}
+   */
+  async getAvailableDocumentTypes(prodi = null) {
+    try {
+      const where = { is_active: true };
+      if (prodi) {
+        where.prodi = prodi;
+      }
+
+      const documents = await prisma.documents.findMany({
+        where,
+        select: {
+          id: true,
+          type: true,
+          prodi: true,
+          description: true,
+          version: true,
+          _count: {
+            select: { document_fields: true }
+          }
+        },
+        orderBy: [
+          { prodi: 'asc' },
+          { type: 'asc' }
+        ]
+      });
+
+      // Group by type untuk mendapatkan informasi unik per tipe
+      const documentTypes = documents.reduce((acc, doc) => {
+        if (!acc[doc.type]) {
+          acc[doc.type] = {
+            type: doc.type,
+            description_template: doc.description.replace(doc.prodi, '{{prodi}}'),
+            prodis: [],
+            total_variants: 0
+          };
+        }
+
+        acc[doc.type].prodis.push({
+          id: doc.id,
+          prodi: doc.prodi,
+          description: doc.description,
+          version: doc.version,
+          field_count: doc._count.document_fields
+        });
+        acc[doc.type].total_variants++;
+
+        return acc;
+      }, {});
+
+      return {
+        success: true,
+        data: {
+          document_types: Object.values(documentTypes),
+          total_types: Object.keys(documentTypes).length,
+          total_variants: documents.length
+        }
+      };
+    } catch (error) {
+      throw new Error(`Gagal mendapatkan tipe dokumen: ${error.message}`);
+    }
+  }
+
+  /**
+   * Mendapatkan daftar prodi yang tersedia
+   * @returns {Object}
+   */
+  async getAvailableProdis() {
+    try {
+      const prodis = await prisma.documents.findMany({
+        where: { is_active: true },
+        select: {
+          prodi: true,
+          _count: {
+            select: { document_fields: true }
+          }
+        },
+        distinct: ['prodi'],
+        orderBy: { prodi: 'asc' }
+      });
+
+      // Get display names from document_fields
+      const prodiDetails = await Promise.all(
+        prodis.map(async (prodiItem) => {
+          const sampleField = await prisma.document_fields.findFirst({
+            where: {
+              field_name: 'nama_prodi',
+              documents: { prodi: prodiItem.prodi }
+            },
+            select: { default_value: true }
+          });
+
+          return {
+            key: prodiItem.prodi,
+            display_name: sampleField?.default_value || prodiItem.prodi,
+            document_count: prodiItem._count?.document_fields || 0
+          };
+        })
+      );
+
+      return {
+        success: true,
+        data: {
+          prodis: prodiDetails,
+          total_prodis: prodiDetails.length
+        }
+      };
+    } catch (error) {
+      throw new Error(`Gagal mendapatkan daftar prodi: ${error.message}`);
+    }
+  }
+
   getDefaultSignerName(role, prodi) {
     const names = {
       dosen_pembimbing: `Dr. Pembimbing ${prodi}`,

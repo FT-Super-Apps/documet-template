@@ -176,7 +176,8 @@ class EdDSADocumentController {
                 name: signer.name,
                 nip: signer.nip
               }),
-              algorithm: 'EdDSA'
+              algorithm: 'EdDSA',
+              timestamp: new Date(signature.timestamp) // Use the timestamp from signature
             }
           });
         }
@@ -786,13 +787,29 @@ class EdDSADocumentController {
     // Verify each signature
     const verificationResults = [];
     for (const signature of document.document_signatures) {
-      const isValid = this.crypto.verifySignature(
-        {
+      let isValid = false;
+
+      try {
+        // Parse signer_info from database
+        const signerInfo = JSON.parse(signature.signer_info);
+
+        // Create the complete signature data object that verifySignature expects
+        const signatureData = {
           signature: signature.signature_data,
+          signerInfo: `${signerInfo.role}:${signerInfo.name}:${signerInfo.nip || 'N/A'}`,
+          timestamp: signature.timestamp.toISOString(),
+          documentHash: document.document_hash,
           algorithm: signature.algorithm
-        },
-        signature.signer.public_key
-      );
+        };
+
+        isValid = this.crypto.verifySignature(signatureData, signature.signer.public_key);
+
+        console.log(`🔍 Verifying signature for ${signerInfo.name} (${signerInfo.role}): ${isValid ? '✅ VALID' : '❌ INVALID'}`);
+
+      } catch (verifyError) {
+        console.error(`❌ Error verifying signature for ${signature.signer.name}:`, verifyError.message);
+        isValid = false;
+      }
 
       verificationResults.push({
         signer: signature.signer.name,
@@ -1168,6 +1185,327 @@ class EdDSADocumentController {
       res.status(500).json({
         success: false,
         error: 'Failed to delete template'
+      });
+    }
+  };
+
+  /**
+   * Get document fields based on document type and prodi
+   */
+  getDocumentFields = async (req, res) => {
+    try {
+      const { type, prodi } = req.params;
+
+      console.log(`📋 Getting document fields for: ${type} - ${prodi}`);
+
+      // Import service (lazy loading to avoid circular dependency)
+      const EdDSADocumentService = require('../services/eddsa-document-service');
+      const documentService = new EdDSADocumentService();
+
+      const result = await documentService.getDocumentFields(type, prodi);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting document fields:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
+  /**
+   * Get all available document types
+   */
+  getDocumentTypes = async (req, res) => {
+    try {
+      const { prodi } = req.query;
+
+      console.log(`📋 Getting available document types${prodi ? ` for ${prodi}` : ''}`);
+
+      const EdDSADocumentService = require('../services/eddsa-document-service');
+      const documentService = new EdDSADocumentService();
+
+      const result = await documentService.getAvailableDocumentTypes(prodi);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting document types:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
+  /**
+   * Get all available prodis
+   */
+  getAvailableProdis = async (req, res) => {
+    try {
+      console.log('🏫 Getting available prodis');
+
+      const EdDSADocumentService = require('../services/eddsa-document-service');
+      const documentService = new EdDSADocumentService();
+
+      const result = await documentService.getAvailableProdis();
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting available prodis:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
+  /**
+   * Generate document with dynamic fields
+   */
+  generateDynamicDocument = async (req, res) => {
+    try {
+      const { type, prodi } = req.params;
+      const formData = req.body;
+
+      console.log(`📄 Generating dynamic document: ${type} for ${prodi}`);
+      console.log('Form data received:', Object.keys(formData));
+
+      // 1. Validate document type
+      if (!(await isValidDocumentTypeAsync(type))) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid document type: ${type}`
+        });
+      }
+
+      // 2. Get document fields configuration
+      const EdDSADocumentService = require('../services/eddsa-document-service');
+      const documentService = new EdDSADocumentService();
+
+      const fieldsResult = await documentService.getDocumentFields(type, prodi);
+      if (!fieldsResult.success) {
+        return res.status(400).json(fieldsResult);
+      }
+
+      const fields = fieldsResult.data.fields;
+
+      // 3. Validate form data against field requirements
+      const validationErrors = [];
+      const processedData = {};
+
+      for (const field of fields) {
+        const fieldName = field.field_name;
+        const fieldValue = formData[fieldName];
+
+        // Check required fields
+        if (field.is_required && (!fieldValue || fieldValue === '' || (Array.isArray(fieldValue) && fieldValue.length === 0))) {
+          validationErrors.push(`Field '${fieldName}' is required`);
+          continue;
+        }
+
+        // Validate field types and rules
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          const rules = field.validation_rules || {};
+
+          // String validation
+          if (typeof fieldValue === 'string') {
+            if (rules.minLength && fieldValue.length < rules.minLength) {
+              validationErrors.push(`Field '${fieldName}' must be at least ${rules.minLength} characters`);
+            }
+            if (rules.maxLength && fieldValue.length > rules.maxLength) {
+              validationErrors.push(`Field '${fieldName}' must not exceed ${rules.maxLength} characters`);
+            }
+            if (rules.pattern && !new RegExp(rules.pattern).test(fieldValue)) {
+              validationErrors.push(`Field '${fieldName}' format is invalid`);
+            }
+            if (rules.allowed_values && !rules.allowed_values.includes(fieldValue)) {
+              validationErrors.push(`Field '${fieldName}' must be one of: ${rules.allowed_values.join(', ')}`);
+            }
+          }
+
+          // Number validation
+          if (field.field_type === 'number') {
+            const numValue = Number(fieldValue);
+            if (isNaN(numValue)) {
+              validationErrors.push(`Field '${fieldName}' must be a number`);
+            } else {
+              if (rules.min !== undefined && numValue < rules.min) {
+                validationErrors.push(`Field '${fieldName}' must be at least ${rules.min}`);
+              }
+              if (rules.max !== undefined && numValue > rules.max) {
+                validationErrors.push(`Field '${fieldName}' must not exceed ${rules.max}`);
+              }
+            }
+          }
+
+          // Table/Array validation
+          if ((field.field_type === 'table' || field.field_type === 'array') && Array.isArray(fieldValue)) {
+            if (rules.min_rows && fieldValue.length < rules.min_rows) {
+              validationErrors.push(`Field '${fieldName}' must have at least ${rules.min_rows} rows`);
+            }
+            if (rules.max_rows && fieldValue.length > rules.max_rows) {
+              validationErrors.push(`Field '${fieldName}' must not exceed ${rules.max_rows} rows`);
+            }
+          }
+        }
+
+        processedData[fieldName] = fieldValue;
+      }
+
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: validationErrors
+        });
+      }
+
+      // 4. Generate unique document ID
+      const documentId = uuidv4();
+
+      // 5. Get signature requirements
+      const signatureRequirements = await getSignatureRequirementsFromDB(type);
+
+      // 6. Prepare data for document generation
+      const documentMetadata = {
+        id: documentId,
+        type: type,
+        prodi: prodi,
+        created_at: new Date().toISOString(),
+        fields: processedData
+      };
+
+      // 7. Generate document using existing utility
+      const templatePath = path.join(__dirname, '..', 'templates', prodi, `${type}.docx`);
+      if (!fs.existsSync(templatePath)) {
+        return res.status(404).json({
+          success: false,
+          error: `Template not found: ${templatePath}`
+        });
+      }
+
+      const outputFileName = `${prodi}_${type}_${Date.now()}.docx`;
+      const outputPath = path.join(__dirname, '..', 'templates', 'output', outputFileName);
+
+      // Generate document with processed data
+      await generateDocumentUtil(templatePath, outputPath, processedData);
+
+      // 8. Create multi-signature manager
+      const multiSigManager = new MultiSignatureManager();
+
+      // 9. Generate signatures for each required role
+      const signatures = {};
+      const signatureData = {
+        documentId,
+        documentType: type,
+        prodi: prodi,
+        timestamp: Date.now(),
+        fields: processedData
+      };
+
+      for (const requirement of signatureRequirements.requirements) {
+        const keyPair = this.crypto.generateKeyPair();
+        const signature = await this.crypto.sign(JSON.stringify(signatureData), keyPair.privateKey);
+
+        signatures[requirement.role] = {
+          signature: signature,
+          publicKey: keyPair.publicKey,
+          role: requirement.role,
+          timestamp: Date.now()
+        };
+
+        multiSigManager.addSignature(requirement.role, signature, keyPair.publicKey);
+      }
+
+      // 10. Verify multi-signature
+      const verificationResult = multiSigManager.verifyAllSignatures(JSON.stringify(signatureData));
+
+      if (!verificationResult.isValid) {
+        return res.status(500).json({
+          success: false,
+          error: 'Multi-signature verification failed',
+          details: verificationResult
+        });
+      }
+
+      // 11. Generate enhanced QR code
+      const verifyAppBaseUrl = getVerifyAppBaseUrl();
+      const verificationUrl = `${verifyAppBaseUrl}/verify/${documentId}`;
+
+      const qrCodePath = await generateQRCodeWithSignature(
+        documentId,
+        verificationUrl,
+        signatures,
+        processedData
+      );
+
+      // 12. Store document metadata in database
+      const savedDocument = await prisma.signed_document.create({
+        data: {
+          id: documentId,
+          document_type: type,
+          prodi: prodi,
+          file_path: outputPath,
+          qr_code_path: qrCodePath,
+          verification_url: verificationUrl,
+          signatures: JSON.stringify(signatures),
+          multi_signature_hash: verificationResult.combinedHash,
+          verification_data: JSON.stringify(signatureData),
+          is_verified: verificationResult.isValid,
+          created_at: new Date(),
+          metadata: JSON.stringify(documentMetadata)
+        }
+      });
+
+      // 13. Store individual signatures
+      for (const [role, sigData] of Object.entries(signatures)) {
+        await prisma.document_signature.create({
+          data: {
+            document_id: documentId,
+            role: role,
+            signature: sigData.signature,
+            public_key: sigData.publicKey,
+            timestamp: new Date(sigData.timestamp),
+            is_verified: true
+          }
+        });
+      }
+
+      console.log(`✅ Dynamic document created successfully: ${documentId}`);
+
+      res.json({
+        success: true,
+        message: 'Dynamic document generated and signed successfully',
+        data: {
+          signedDocument: {
+            id: documentId,
+            document_type: type,
+            prodi: prodi,
+            file_path: outputPath,
+            qr_code_path: qrCodePath,
+            verification_url: verificationUrl,
+            multi_signature_hash: verificationResult.combinedHash,
+            is_verified: verificationResult.isValid,
+            created_at: savedDocument.created_at,
+            metadata: documentMetadata
+          },
+          signatures: signatures,
+          verification: {
+            isValid: verificationResult.isValid,
+            totalSignatures: Object.keys(signatures).length,
+            requiredSignatures: signatureRequirements.requirements.length,
+            combinedHash: verificationResult.combinedHash
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error generating dynamic document:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   };

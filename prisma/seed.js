@@ -1,118 +1,45 @@
 const { PrismaClient } = require('@prisma/client');
-const { seedDocumentSignatureConfig } = require('./seed-document-signature-config');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Hapus semua data lama
-  await prisma.document_fields.deleteMany();
-  await prisma.documents.deleteMany();
+  try {
+    console.log('🚀 Starting comprehensive database seeding...');
 
-  // Data untuk setiap prodi
-  const prodiTemplates = [
-    {
-      type: 'kkp',
-      prodi: 'informatika',
-      template_path: 'templates/informatika/kkp.docx',
-      description: 'Surat Kerja Kuliah Praktik - Teknik Informatika',
-      fields: [
-        { field_name: 'kepada', field_type: 'text', is_required: true },
-        { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Informatika' },
-        { field_name: 'nama_ttd', field_type: 'text', is_required: true },
-        { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
-        { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
-        { field_name: 'tableData', field_type: 'array', is_required: true }
-      ]
-    },
-    {
-      type: 'kkp',
-      prodi: 'pengairan',
-      template_path: 'templates/pengairan/kkp.docx',
-      description: 'Surat Kerja Kuliah Praktik - Teknik Pengairan',
-      fields: [
-        { field_name: 'kepada', field_type: 'text', is_required: true },
-        { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Teknik Pengairan' },
-        { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
-        { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
-        { field_name: 'tableData', field_type: 'array', is_required: true },
-        { field_name: 'dosen_pembimbing', field_type: 'text', is_required: false }
-      ]
-    },
-    {
-      type: 'kkp',
-      prodi: 'elektro',
-      template_path: 'templates/elektro/kkp.docx',
-      description: 'Surat Kerja Kuliah Praktik - Teknik Elektro',
-      fields: [
-        { field_name: 'kepada', field_type: 'text', is_required: true },
-        { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Teknik Elektro' },
-        { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
-        { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
-        { field_name: 'tableData', field_type: 'array', is_required: true },
-        { field_name: 'bidang_keahlian', field_type: 'text', is_required: false }
-      ]
-    },
-    {
-      type: 'kkp',
-      prodi: 'arsitektur',
-      template_path: 'templates/arsitektur/kkp.docx',
-      description: 'Surat Kerja Kuliah Praktik - Arsitektur',
-      fields: [
-        { field_name: 'kepada', field_type: 'text', is_required: true },
-        { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Arsitektur' },
-        { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
-        { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
-        { field_name: 'tableData', field_type: 'array', is_required: true },
-        { field_name: 'jenis_proyek', field_type: 'text', is_required: false }
-      ]
-    },
-    {
-      type: 'kkp',
-      prodi: 'pwk',
-      template_path: 'templates/pwk/kkp.docx',
-      description: 'Surat Kerja Kuliah Praktik - Perencanaan Wilayah dan Kota',
-      fields: [
-        { field_name: 'kepada', field_type: 'text', is_required: true },
-        { field_name: 'tempat_tujuan', field_type: 'text', is_required: true },
-        { field_name: 'nama_prodi', field_type: 'text', is_required: true, default_value: 'Perencanaan Wilayah dan Kota' },
-        { field_name: 'tanggal_hijriyah', field_type: 'date', is_required: true },
-        { field_name: 'tanggal_masehi', field_type: 'date', is_required: true },
-        { field_name: 'tableData', field_type: 'array', is_required: true },
-        { field_name: 'wilayah_fokus', field_type: 'text', is_required: false }
-      ]
+    // Import dan jalankan seeder dalam urutan yang benar
+    console.log('📄 Step 1: Seeding documents and fields...');
+    const { seedDocuments } = require('./seed-documents');
+    if (typeof seedDocuments === 'function') {
+      await seedDocuments();
+    } else {
+      // Fallback jika export berbeda
+      await require('./seed-documents');
     }
-  ];
 
-  // Insert data untuk setiap prodi
-  for (const template of prodiTemplates) {
-    const document = await prisma.documents.create({
-      data: {
-        type: template.type,
-        prodi: template.prodi,
-        template_path: template.template_path,
-        description: template.description,
-        document_fields: {
-          create: template.fields.map(field => ({
-            field_name: field.field_name,
-            field_type: field.field_type,
-            is_required: field.is_required,
-            default_value: field.default_value || null
-          }))
-        }
-      }
-    });
+    console.log('🔐 Step 2: Seeding EdDSA system...');
+    const { seedEdDSASystem } = require('./seed-eddsa-system');
+    if (typeof seedEdDSASystem === 'function') {
+      await seedEdDSASystem();
+    } else {
+      // Fallback jika export berbeda  
+      await require('./seed-eddsa-system');
+    }
 
-    console.log(`Created document template for ${template.prodi}:`, document.id);
+    console.log('📋 Step 3: Seeding document signature configuration...');
+    const { seedDocumentSignatureConfig } = require('./seed-document-signature-config');
+    await seedDocumentSignatureConfig();
+
+    console.log('✅ All basic seeding completed successfully!');
+    console.log('');
+    console.log('🔧 Enhanced seeding available (run separately):');
+    console.log('   node prisma/seed-enhanced-fields.js');
+    console.log('   node prisma/seed-audit-history.js');
+    console.log('');
+
+  } catch (error) {
+    console.error('❌ Error during seeding:', error);
+    throw error;
   }
-
-  console.log('✅ Seed data berhasil ditambahkan untuk semua prodi!');
-
-  // Seed document signature configuration
-  await seedDocumentSignatureConfig();
 }
 
 main()

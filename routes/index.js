@@ -50,6 +50,7 @@ const templateUpload = multer({
 // All API endpoints unified at root (router is mounted under / and /api by server)
 // EdDSA document generation and verification
 router.post('/generate-document/:type/:prodi', eddsaController.generateSignedDocument);
+router.post('/generate-dynamic-document/:type/:prodi', eddsaController.generateDynamicDocument);
 router.post('/verify-qr', eddsaController.verifyDocumentFromQR);
 // JSON verification (avoid conflict with HTML verify page below)
 router.get('/verification/:documentId', eddsaController.verifyDocumentById);
@@ -343,6 +344,19 @@ router.get('/v/:documentId', async (req, res) => {
   // Redirect to full verification
   res.redirect(`/api/verification/${req.params.documentId}`);
 });
+
+// ===========================================
+// DOCUMENT FIELDS MANAGEMENT ROUTES
+// ===========================================
+
+// Get document fields based on document type and prodi
+router.get('/document-fields/:type/:prodi', eddsaController.getDocumentFields);
+
+// Get all available document types (with optional prodi filter)
+router.get('/document-types-available', eddsaController.getDocumentTypes);
+
+// Get all available prodis
+router.get('/prodis-available', eddsaController.getAvailableProdis);
 
 // Health check
 router.get('/health', (req, res) => {
