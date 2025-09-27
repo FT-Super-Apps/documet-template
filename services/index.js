@@ -17,10 +17,12 @@ const serviceDocument = async ({ type, prodi, data }) => {
     }
 
     // Generate dokumen dengan template sesuai prodi
-    const { filePath, no_surat } = await generateDocument(type, prodi, documentData);
+    const { filePath, fileName, downloadUrl, no_surat } = await generateDocument(type, prodi, documentData);
 
     return {
       filePath,
+      fileName,
+      downloadUrl,
       no_surat,
       prodi,
       message: `Dokumen ${type.toUpperCase()} untuk prodi ${prodi} berhasil dibuat`
