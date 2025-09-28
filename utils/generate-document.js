@@ -2,17 +2,26 @@ const fs = require('fs');
 const path = require('path');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
-const { lastNumber } = require('../api');
 const { generateQRCodeWithImage } = require('./generate-qrcode');
 const ImageModule = require('docxtemplater-image-module-free');
 
+// Simple function to generate document number
+function generateDocumentNumber(type) {
+  const year = new Date().getFullYear();
+  const month = String(new Date().getMonth() + 1).padStart(2, '0');
+  const day = String(new Date().getDate()).padStart(2, '0');
+  const time = new Date().getTime().toString().slice(-3); // last 3 digits
+
+  return `${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}/${type.toUpperCase()}/${month}${year}`;
+}
+
 const generateDocument = async (type, prodi, data) => {
   try {
-    const no_surat = await lastNumber(type);
+    const no_surat = generateDocumentNumber(type);
 
-    // Gunakan template path dari metadata jika ada, fallback ke path lama
-    const templatePath = data._metadata?.template_path
-      ? path.resolve(__dirname, '..', data._metadata.template_path)
+    // Gunakan template path dari data jika ada, fallback ke path default
+    const templatePath = data.template_path
+      ? path.resolve(__dirname, '..', data.template_path)
       : path.resolve(__dirname, `../templates/${prodi}/${type}.docx`);
 
     // Cek apakah template file ada
@@ -23,9 +32,10 @@ const generateDocument = async (type, prodi, data) => {
     const templateContent = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(templateContent);
 
-    const qrCodePath = await generateQRCodeWithImage(
-      `${no_surat},${data.nama_ttd || 'Unknown'},${prodi}`
-    );
+    // Generate verification URL for QR code using environment variables
+    const BASE_URL = process.env.BASE_URL || `${process.env.PROTOCOL || 'http'}://${process.env.DOMAIN || 'localhost'}:${process.env.PORT || 8080}`;
+    const verificationUrl = `${BASE_URL}/verify?id=${data.doc_id || 'temp'}`;
+    const qrCodePath = await generateQRCodeWithImage(verificationUrl);
 
     const imageModuleOpts = {
       centered: true,
@@ -46,8 +56,8 @@ const generateDocument = async (type, prodi, data) => {
       .attachModule(imageModule)
       .loadZip(zip);
 
-    // Hapus metadata sebelum render
-    const { _metadata, ...renderData } = data;
+    // Hapus template_path sebelum render
+    const { template_path, ...renderData } = data;
 
     doc.setData({
       ...renderData,

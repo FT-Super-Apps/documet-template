@@ -13,7 +13,7 @@ Sistem terbaru menggunakan **deteksi field dinamis dari database**, menggantikan
 
 | Prodi | Code | Template Path | Fields Khusus |
 |-------|------|---------------|---------------|
-| Teknik Informatika | `informatika` | `templates/informatika/kkp.docx` | - |
+| Informatika | `Informatika` | `templates/Informatika/kkp.docx` | - |
 | Teknik Pengairan | `pengairan` | `templates/pengairan/kkp.docx` | - |
 | Teknik Elektro | `elektro` | `templates/elektro/kkp.docx` | - |
 | Arsitektur | `arsitektur` | `templates/arsitektur/kkp.docx` | - |
@@ -46,7 +46,7 @@ generate-document-api/
 ├── session/                      # Session management
 │   └── index.js
 ├── templates/                    # Document templates per prodi
-│   ├── informatika/kkp.docx
+│   ├── Informatika/kkp.docx
 │   ├── elektro/kkp.docx
 │   ├── arsitektur/kkp.docx
 │   ├── pengairan/kkp.docx
@@ -181,7 +181,7 @@ Generate dokumen dengan prodi spesifik.
 
 **Example Request:**
 ```bash
-POST /api/generate-document/kkp/informatika
+POST /api/generate-document/kkp/Informatika
 Content-Type: application/json
 
 {
@@ -204,10 +204,10 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "filePath": "/path/to/informatika_kkp_1694168876543.docx",
+    "filePath": "/path/to/Informatika_kkp_1694168876543.docx",
     "no_surat": "001/KKP/2024",
-    "prodi": "informatika",
-    "message": "Dokumen KKP untuk prodi informatika berhasil dibuat"
+    "prodi": "Informatika",
+    "message": "Dokumen KKP untuk prodi Informatika berhasil dibuat"
   }
 }
 ```
@@ -224,9 +224,9 @@ Mendapatkan semua tipe dokumen yang tersedia.
   "data": {
     "kkp": [
       {
-        "prodi": "informatika",
+        "prodi": "Informatika",
         "description": "Template surat KKP untuk Program Studi Informatika",
-        "template_path": "templates/informatika/kkp.docx"
+        "template_path": "templates/Informatika/kkp.docx"
       },
       {
         "prodi": "elektro",
@@ -249,8 +249,8 @@ Mendapatkan field yang tersedia untuk tipe dokumen tertentu.
     {
       "id": 1,
       "type": "kkp",
-      "prodi": "informatika",
-      "template_path": "templates/informatika/kkp.docx",
+      "prodi": "Informatika",
+      "template_path": "templates/Informatika/kkp.docx",
       "description": "Template surat KKP untuk Program Studi Informatika",
       "fields": [
         {
@@ -289,7 +289,7 @@ Mendapatkan daftar semua template yang tersedia.
 Mendapatkan field yang diperlukan untuk template tertentu.
 
 #### `POST /api/generate-document/{type}`
-Generate dokumen (default ke prodi informatika).
+Generate dokumen (default ke prodi Informatika).
 
 ---
 
@@ -309,7 +309,7 @@ node test/test-dynamic-fields.js
 curl -X GET "http://localhost:8080/api/document-config/types"
 
 # 2. Get fields for KKP Informatika
-curl -X GET "http://localhost:8080/api/document-config/fields/kkp?prodi=informatika"
+curl -X GET "http://localhost:8080/api/document-config/fields/kkp?prodi=Informatika"
 
 # 3. Generate KKP document for Elektro
 curl -X POST "http://localhost:8080/api/generate-document/kkp/elektro" \
@@ -363,7 +363,7 @@ for (const field of document.document_fields) {
 Generate fields berdasarkan konfigurasi database.
 
 ```javascript
-const result = await generateFields('kkp', 'informatika', {
+const result = await generateFields('kkp', 'Informatika', {
   kepada: 'PT. Tech',
   tableData: [{nama: 'John', nim: '123'}]
 });
@@ -373,7 +373,7 @@ const result = await generateFields('kkp', 'informatika', {
 Mendapatkan daftar field yang tersedia.
 
 ```javascript
-const fields = await getAvailableFields('kkp', 'informatika');
+const fields = await getAvailableFields('kkp', 'Informatika');
 ```
 
 #### `getAllDocumentTypes()`
@@ -396,8 +396,8 @@ Untuk menambahkan tipe dokumen atau prodi baru:
 await prisma.documents.create({
   data: {
     type: 'surat_tugas',
-    prodi: 'informatika', 
-    template_path: 'templates/informatika/surat_tugas.docx',
+    prodi: 'Informatika', 
+    template_path: 'templates/Informatika/surat_tugas.docx',
     description: 'Surat Tugas Informatika',
     document_fields: {
       create: [
@@ -418,13 +418,13 @@ await prisma.documents.create({
 ```
 
 ### 2️⃣ Upload Template File
-Upload file template ke `templates/informatika/surat_tugas.docx`
+Upload file template ke `templates/Informatika/surat_tugas.docx`
 
 ### 3️⃣ Test API
 Sistem otomatis mendeteksi konfigurasi baru tanpa perlu mengubah kode!
 
 ```bash
-curl -X GET "http://localhost:8080/api/document-config/fields/surat_tugas?prodi=informatika"
+curl -X GET "http://localhost:8080/api/document-config/fields/surat_tugas?prodi=Informatika"
 ```
 
 ---

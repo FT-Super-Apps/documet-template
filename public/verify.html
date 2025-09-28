@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Surat KKP - Informatika</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .verification-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .status-valid {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-invalid {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .students-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .table-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .student-row {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .student-details {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            text-align: center;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .qr-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin-top: 20px;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Verifikasi Surat KKP</h1>
+            <p>Program Studi Informatika</p>
+        </div>
+
+        <div class="content">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Memverifikasi dokumen...</p>
+            </div>
+
+            <div id="verificationResult" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <div id="errorMessage" style="display: none;">
+                <div class="error-message">
+                    <h3>❌ Dokumen Tidak Valid</h3>
+                    <p id="errorText">Dokumen tidak ditemukan atau sudah tidak berlaku.</p>
+                </div>
+                <a href="/" class="back-btn">🏠 Kembali ke Beranda</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get document ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const documentId = urlParams.get('id');
+
+        async function verifyDocument() {
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('verificationResult');
+            const error = document.getElementById('errorMessage');
+
+            if (!documentId) {
+                showError('ID dokumen tidak ditemukan dalam URL');
+                return;
+            }
+
+            try {
+                loading.style.display = 'block';
+
+                const response = await fetch(`/verify-document/${documentId}`);
+                const data = await response.json();
+
+                loading.style.display = 'none';
+
+                if (response.ok && data.valid) {
+                    showValidDocument(data.document);
+                } else {
+                    showError(data.message || 'Dokumen tidak valid');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                showError('Terjadi kesalahan saat memverifikasi dokumen: ' + error.message);
+            }
+        }
+
+        function showValidDocument(doc) {
+            const result = document.getElementById('verificationResult');
+
+            const studentsHtml = doc.tableData && doc.tableData.length > 0
+                ? doc.tableData.map(student => `
+                    <div class="student-row">
+                        <div class="student-info">
+                            <div class="student-name">${student.nama}</div>
+                            <div class="student-details">NIM: ${student.nim} | Semester: ${student.semester}</div>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="student-row"><div class="student-info">Tidak ada data mahasiswa</div></div>';
+
+            result.innerHTML = `
+                <div class="verification-card">
+                    <div class="status-badge status-valid">✅ DOKUMEN VALID</div>
+                    <h2>Surat Permohonan Kerja Praktik (KKP)</h2>
+                    <div class="timestamp">Dibuat pada: ${new Date(doc.timestamp).toLocaleString('id-ID')}</div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">No. Surat</div>
+                        <div class="info-value">${doc.no_surat}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Ditujukan Kepada</div>
+                        <div class="info-value">${doc.kepada}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Lokasi KKP</div>
+                        <div class="info-value">${doc.tempat_tujuan}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Program Studi</div>
+                        <div class="info-value">${doc.nama_prodi || 'Informatika'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Tanggal Hijriyah</div>
+                        <div class="info-value">${doc.tanggal_hijriyah}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Tanggal Masehi</div>
+                        <div class="info-value">${doc.tanggal_masehi}</div>
+                    </div>
+                </div>
+
+                ${doc.deskripsi ? `
+                <div class="info-item" style="margin: 20px 0;">
+                    <div class="info-label">Deskripsi/Tujuan KKP</div>
+                    <div class="info-value">${doc.deskripsi}</div>
+                </div>
+                ` : ''}
+
+                <div class="students-table">
+                    <div class="table-header">
+                        👥 Daftar Mahasiswa (${doc.tableData ? doc.tableData.length : 0} orang)
+                    </div>
+                    ${studentsHtml}
+                </div>
+
+                <div class="qr-info">
+                    <h4>📱 Informasi QR Code</h4>
+                    <p>Dokumen ini telah diverifikasi melalui QR code yang terdapat pada surat resmi. QR code ini berfungsi sebagai tanda tangan digital dan bukti keaslian dokumen.</p>
+                    <p><strong>ID Verifikasi:</strong> ${documentId}</p>
+                </div>
+
+                <a href="/" class="back-btn">🏠 Kembali ke Beranda</a>
+            `;
+
+            result.style.display = 'block';
+        }
+
+        function showError(message) {
+            const error = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+
+            errorText.textContent = message;
+            error.style.display = 'block';
+        }
+
+        // Start verification when page loads
+        window.onload = verifyDocument;
+    </script>
+</body>
+</html>

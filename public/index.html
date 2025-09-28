@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Dokumen - Informatika</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ff7e5f 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg, #fff 0%, #e8f4fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
+        }
+
+        .form-container {
+            padding: 50px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        .table-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+            margin: 20px 0;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .add-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .student-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .student-row input {
+            flex: 1;
+            margin: 0;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .signer-status {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .signer-status.new {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .signer-status.existing {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Generator Dokumen</h1>
+            <p>Program Studi Informatika - Sistem Digital Signature</p>
+        </div>
+
+        <div class="form-container">
+            <div class="info-box">
+                <h3>ℹ️ Informasi</h3>
+                <p>Pilih jenis dokumen untuk menampilkan form yang sesuai. Sistem akan otomatis membuat kunci digital untuk penandatangan baru.</p>
+            </div>
+
+            <form id="documentForm">
+                <div class="form-group">
+                    <label for="document_type">Jenis Dokumen <span class="required">*</span></label>
+                    <select id="document_type" name="document_type" required onchange="loadDocumentFields()">
+                        <option value="">Pilih Jenis Dokumen</option>
+                        <option value="kkp">📄 Surat Permohonan KKP</option>
+                        <option value="certificate">🏆 Sertifikat</option>
+                        <option value="lembar_pengesahan">📋 Lembar Pengesahan</option>
+                    </select>
+                </div>
+
+                <div id="dynamicFields" style="display: none;">
+                    <!-- Dynamic fields will be loaded here -->
+                </div>
+
+                <div id="signerSection" style="display: none;">
+                    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+                        <h3>🔐 Informasi Penandatangan</h3>
+                        <p>Untuk keamanan dokumen, sistem akan membuat kunci digital untuk penandatangan yang baru pertama kali input.</p>
+                    </div>
+                    <div id="signerStatus"></div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn" style="display: none;">🚀 Buat Dokumen</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Sedang memproses dokumen...</p>
+            </div>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let documentTemplates = {};
+        let currentSignerInfo = null;
+
+        // Load document templates from server
+        async function loadDocumentTemplates() {
+            try {
+                const response = await fetch('/api/document-templates');
+                const data = await response.json();
+                if (data.success) {
+                    documentTemplates = data.templates;
+                }
+            } catch (error) {
+                console.error('Error loading templates:', error);
+            }
+        }
+
+        // Load fields when document type changes
+        async function loadDocumentFields() {
+            const documentType = document.getElementById('document_type').value;
+            const dynamicFields = document.getElementById('dynamicFields');
+            const signerSection = document.getElementById('signerSection');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!documentType) {
+                dynamicFields.style.display = 'none';
+                signerSection.style.display = 'none';
+                submitBtn.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/document-fields/${documentType}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderDynamicFields(data.fields);
+                    dynamicFields.style.display = 'block';
+                    signerSection.style.display = 'block';
+                    submitBtn.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading fields:', error);
+            }
+        }
+
+        // Render dynamic fields based on document type
+        function renderDynamicFields(fields) {
+            const container = document.getElementById('dynamicFields');
+            let html = '';
+
+            fields.forEach(field => {
+                if (field.name === 'tableData') {
+                    html += renderTableField(field);
+                } else if (field.name.includes('nama_ttd') || field.name.includes('nip_nidn')) {
+                    // Signer fields will be handled separately
+                    return;
+                } else {
+                    html += renderInputField(field);
+                }
+            });
+
+            // Add signer fields
+            const signerFields = fields.filter(f => f.name.includes('nama_ttd') || f.name.includes('nip_nidn'));
+            html += renderSignerFields(signerFields);
+
+            container.innerHTML = html;
+        }
+
+        // Render regular input field
+        function renderInputField(field) {
+            const required = field.required ? 'required' : '';
+            const requiredMark = field.required ? '<span class="required">*</span>' : '';
+
+            if (field.type === 'textarea') {
+                return `
+                    <div class="form-group">
+                        <label for="${field.name}">${field.label} ${requiredMark}</label>
+                        <textarea id="${field.name}" name="${field.name}" rows="3" placeholder="${field.placeholder || ''}" ${required}></textarea>
+                    </div>
+                `;
+            } else if (field.type === 'date') {
+                return `
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="${field.name}">${field.label} ${requiredMark}</label>
+                            <input type="date" id="${field.name}" name="${field.name}" ${required}>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="${field.name}">${field.label} ${requiredMark}</label>
+                            <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required}>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Render table field for student data
+        function renderTableField(field) {
+            return `
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>${field.label} <span class="required">*</span></h3>
+                        <button type="button" class="add-btn" onclick="addTableRow()">+ Tambah</button>
+                    </div>
+                    <div id="tableContainer">
+                        <div class="student-row">
+                            ${field.columns.map(col => `<input type="text" placeholder="${col.charAt(0).toUpperCase() + col.slice(1)}" name="${col}[]" required>`).join('')}
+                            <button type="button" class="remove-btn" onclick="removeTableRow(this)">Hapus</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render signer fields with security check
+        function renderSignerFields(signerFields) {
+            const documentType = document.getElementById('document_type').value;
+            let html = '';
+
+            if (documentType === 'certificate') {
+                // Special handling for certificate with 2 signers
+                const signer1Fields = signerFields.filter(f => f.name.includes('_1'));
+                const signer2Fields = signerFields.filter(f => f.name.includes('_2'));
+
+                if (signer1Fields.length > 0) {
+                    html += '<div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;"><h3>🔐 Tanda Tangan 1</h3></div><div class="row">';
+                    signer1Fields.forEach(field => {
+                        const required = field.required ? 'required' : '';
+                        const requiredMark = field.required ? '<span class="required">*</span>' : '';
+                        html += `
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="${field.name}">${field.label} ${requiredMark}</label>
+                                    <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required} ${field.name === 'nip_nidn_1' ? 'onblur="checkSignerSecurity()"' : ''}>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+
+                if (signer2Fields.length > 0) {
+                    html += '<div class="info-box" style="background: #e3f2fd; border-left-color: #2196f3;"><h3>🔐 Tanda Tangan 2</h3></div><div class="row">';
+                    signer2Fields.forEach(field => {
+                        const required = field.required ? 'required' : '';
+                        const requiredMark = field.required ? '<span class="required">*</span>' : '';
+                        html += `
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="${field.name}">${field.label} ${requiredMark}</label>
+                                    <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required}>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+            } else {
+                // Default handling for other document types
+                html += '<div class="row">';
+                signerFields.forEach(field => {
+                    const required = field.required ? 'required' : '';
+                    const requiredMark = field.required ? '<span class="required">*</span>' : '';
+                    html += `
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="${field.name}">${field.label} ${requiredMark}</label>
+                                <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required} ${field.name === 'nip_nidn' ? 'onblur="checkSignerSecurity()"' : ''}>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // Check signer security when NIP/NIDN is entered
+        async function checkSignerSecurity() {
+            const documentType = document.getElementById('document_type').value;
+            let namaTtd, nipNidn;
+
+            if (documentType === 'certificate') {
+                namaTtd = document.getElementById('nama_ttd_1')?.value;
+                nipNidn = document.getElementById('nip_nidn_1')?.value;
+            } else {
+                namaTtd = document.getElementById('nama_ttd')?.value;
+                nipNidn = document.getElementById('nip_nidn')?.value;
+            }
+
+            if (!namaTtd || !nipNidn) return;
+
+            try {
+                const response = await fetch('/api/check-signer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nama_ttd: namaTtd, nip_nidn: nipNidn })
+                });
+
+                const data = await response.json();
+                displaySignerStatus(data);
+
+                // Store signer info for form submission
+                currentSignerInfo = data;
+
+            } catch (error) {
+                console.error('Error checking signer:', error);
+            }
+        }
+
+        // Display signer status
+        function displaySignerStatus(signerData) {
+            const statusDiv = document.getElementById('signerStatus');
+
+            if (signerData.exists) {
+                statusDiv.innerHTML = `
+                    <div class="signer-status existing">
+                        ✅ Penandatangan sudah terdaftar dengan kunci digital yang valid.
+                        <br><strong>ID:</strong> ${signerData.signer_id}
+                    </div>
+                `;
+                // Store token in localStorage
+                localStorage.setItem('signer_token_' + signerData.signer_id, signerData.token);
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="signer-status new">
+                        🔑 Penandatangan baru akan didaftarkan dan dibuat kunci digital.
+                        <br><strong>ID Baru:</strong> ${signerData.signer_id}
+                    </div>
+                `;
+                // Store token in localStorage
+                localStorage.setItem('signer_token_' + signerData.signer_id, signerData.token);
+            }
+        }
+
+        // Add table row
+        function addTableRow() {
+            const container = document.getElementById('tableContainer');
+            const firstRow = container.querySelector('.student-row');
+            const newRow = firstRow.cloneNode(true);
+
+            // Clear input values
+            newRow.querySelectorAll('input').forEach(input => input.value = '');
+            container.appendChild(newRow);
+        }
+
+        // Remove table row
+        function removeTableRow(button) {
+            const container = document.getElementById('tableContainer');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            } else {
+                alert('Minimal harus ada satu data');
+            }
+        }
+
+        // Form submission
+        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const submitBtn = document.getElementById('submitBtn');
+
+            const documentType = formData.get('document_type');
+
+            if (!documentType) {
+                alert('Silakan pilih jenis dokumen terlebih dahulu');
+                return;
+            }
+
+            // Collect all form data
+            const data = { document_type: documentType };
+
+            // Get regular fields
+            for (const [key, value] of formData.entries()) {
+                if (!key.includes('[]')) {
+                    data[key] = value;
+                }
+            }
+
+            // Get table data if exists
+            const tableFields = ['nama', 'nim', 'semester'];
+            const hasTableData = tableFields.some(field => formData.getAll(field + '[]').length > 0);
+
+            if (hasTableData) {
+                data.tableData = tableFields[0] ? formData.getAll(tableFields[0] + '[]').map((_, index) => {
+                    const row = {};
+                    tableFields.forEach(field => {
+                        const values = formData.getAll(field + '[]');
+                        row[field] = values[index] || '';
+                    });
+                    return row;
+                }) : [];
+            }
+
+            // Add signer info
+            if (currentSignerInfo) {
+                data.signer_info = currentSignerInfo;
+            }
+
+            try {
+                loading.style.display = 'block';
+                result.style.display = 'none';
+                submitBtn.disabled = true;
+
+                const response = await fetch('/generate-document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    const docTypeNames = {
+                        'kkp': 'Surat Permohonan KKP',
+                        'certificate': 'Sertifikat',
+                        'lembar_pengesahan': 'Lembar Pengesahan'
+                    };
+
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3>✅ ${docTypeNames[documentType]} Berhasil Dibuat!</h3>
+                        <p><strong>No Surat:</strong> ${responseData.no_surat}</p>
+                        <p><strong>File:</strong> ${responseData.filename}</p>
+                        <p><strong>Digital Signature:</strong> ${responseData.signature ? 'Tersedia' : 'Tidak tersedia'}</p>
+                        <p><strong>QR Code:</strong> Tersedia di dokumen untuk verifikasi</p>
+                        <br>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="/download/${responseData.filename}" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📥 Download Dokumen</a>
+                            <a href="/verify?id=${responseData.id}" target="_blank" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Lihat Verifikasi</a>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(responseData.message || 'Terjadi kesalahan');
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>❌ Gagal Membuat Dokumen</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            } finally {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Set default date
+        window.onload = function() {
+            loadDocumentTemplates();
+
+            // Set default masehi date when page loads
+            setTimeout(() => {
+                const masehiInput = document.getElementById('tanggal_masehi');
+                if (masehiInput) {
+                    masehiInput.value = new Date().toISOString().split('T')[0];
+                }
+            }, 100);
+        };
+    </script>
+</body>
+</html>

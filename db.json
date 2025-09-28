@@ -1,0 +1,488 @@
+{
+  "document_templates": [
+    {
+      "type": "kkp",
+      "name": "Surat Permohonan KKP",
+      "template_path": "templates/informatika/kkp.docx",
+      "description": "Surat permohonan Kerja Praktik untuk mahasiswa Informatika",
+      "fields": [
+        {
+          "name": "kepada",
+          "label": "Ditujukan Kepada",
+          "type": "text",
+          "required": true,
+          "placeholder": "PT. Tech Indonesia"
+        },
+        {
+          "name": "tempat_tujuan",
+          "label": "Lokasi KKP",
+          "type": "text",
+          "required": true,
+          "placeholder": "Jakarta"
+        },
+        {
+          "name": "tanggal_hijriyah",
+          "label": "Tanggal Hijriyah",
+          "type": "text",
+          "required": false,
+          "placeholder": "1447/04/05"
+        },
+        {
+          "name": "tanggal_masehi",
+          "label": "Tanggal Masehi",
+          "type": "date",
+          "required": false
+        },
+        {
+          "name": "deskripsi",
+          "label": "Deskripsi/Tujuan KKP",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Deskripsi singkat tentang tujuan dan kegiatan KKP..."
+        },
+        {
+          "name": "tableData",
+          "label": "Data Mahasiswa",
+          "type": "table",
+          "required": true,
+          "columns": [
+            "nama",
+            "nim",
+            "semester"
+          ]
+        },
+        {
+          "name": "nama_ttd",
+          "label": "Nama Penandatangan",
+          "type": "text",
+          "required": true,
+          "placeholder": "Dr. John Doe, M.Kom"
+        },
+        {
+          "name": "nip_nidn",
+          "label": "NIP/NIDN",
+          "type": "text",
+          "required": true,
+          "placeholder": "198501012010011001"
+        }
+      ]
+    },
+    {
+      "type": "certificate",
+      "name": "Sertifikat",
+      "template_path": "templates/informatika/certificate.docx",
+      "description": "Sertifikat penyelesaian program untuk mahasiswa Informatika",
+      "fields": [
+        {
+          "name": "nama_mhs",
+          "label": "Nama Mahasiswa",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ahmad Rahman"
+        },
+        {
+          "name": "nim",
+          "label": "NIM",
+          "type": "text",
+          "required": true,
+          "placeholder": "2019001"
+        },
+        {
+          "name": "nama_kegiatan",
+          "label": "Nama Kegiatan",
+          "type": "text",
+          "required": true,
+          "placeholder": "Workshop Web Development"
+        },
+        {
+          "name": "tanggal_hijriyah",
+          "label": "Tanggal Hijriyah",
+          "type": "text",
+          "required": false,
+          "placeholder": "1447/04/05"
+        },
+        {
+          "name": "tanggal_masehi",
+          "label": "Tanggal Masehi",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "nilai_grade",
+          "label": "Nilai/Grade",
+          "type": "text",
+          "required": false,
+          "placeholder": "A"
+        },
+        {
+          "name": "nama_ttd_1",
+          "label": "Nama Penandatangan 1",
+          "type": "text",
+          "required": true,
+          "placeholder": "Dr. Jane Smith, M.Kom"
+        },
+        {
+          "name": "nip_nidn_1",
+          "label": "NIP/NIDN Penandatangan 1",
+          "type": "text",
+          "required": true,
+          "placeholder": "198502022010012002"
+        },
+        {
+          "name": "nama_ttd_2",
+          "label": "Nama Penandatangan 2",
+          "type": "text",
+          "required": true,
+          "placeholder": "Prof. Dr. Ahmad Ali, M.T"
+        },
+        {
+          "name": "nip_nidn_2",
+          "label": "NIP/NIDN Penandatangan 2",
+          "type": "text",
+          "required": true,
+          "placeholder": "197503032005011003"
+        }
+      ]
+    },
+    {
+      "type": "lembar_pengesahan",
+      "name": "Lembar Pengesahan",
+      "template_path": "templates/informatika/lembar_pengesahan.docx",
+      "description": "Lembar pengesahan untuk tugas akhir/skripsi mahasiswa Informatika",
+      "fields": [
+        {
+          "name": "judul_ta",
+          "label": "Judul Tugas Akhir/Skripsi",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Sistem Informasi Manajemen..."
+        },
+        {
+          "name": "nama_mahasiswa",
+          "label": "Nama Mahasiswa",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ahmad Rahman"
+        },
+        {
+          "name": "nim",
+          "label": "NIM",
+          "type": "text",
+          "required": true,
+          "placeholder": "2019001"
+        },
+        {
+          "name": "tanggal_hijriyah",
+          "label": "Tanggal Hijriyah",
+          "type": "text",
+          "required": false,
+          "placeholder": "1447/04/05"
+        },
+        {
+          "name": "tanggal_masehi",
+          "label": "Tanggal Masehi",
+          "type": "date",
+          "required": false
+        },
+        {
+          "name": "nama_pembimbing1",
+          "label": "Nama Pembimbing 1",
+          "type": "text",
+          "required": true,
+          "placeholder": "Dr. John Doe, M.Kom"
+        },
+        {
+          "name": "nip_pembimbing1",
+          "label": "NIP Pembimbing 1",
+          "type": "text",
+          "required": true,
+          "placeholder": "198501012010011001"
+        },
+        {
+          "name": "nama_pembimbing2",
+          "label": "Nama Pembimbing 2",
+          "type": "text",
+          "required": false,
+          "placeholder": "Dr. Jane Smith, M.Kom"
+        },
+        {
+          "name": "nip_pembimbing2",
+          "label": "NIP Pembimbing 2",
+          "type": "text",
+          "required": false,
+          "placeholder": "198502022010012002"
+        },
+        {
+          "name": "nama_ttd",
+          "label": "Nama Ketua Program Studi",
+          "type": "text",
+          "required": true,
+          "placeholder": "Prof. Dr. Ahmad Ali, M.T"
+        },
+        {
+          "name": "nip_nidn",
+          "label": "NIP/NIDN Kaprodi",
+          "type": "text",
+          "required": true,
+          "placeholder": "197503032005011003"
+        }
+      ]
+    }
+  ],
+  "generated_documents": [
+    {
+      "id": 1,
+      "timestamp": "2025-09-28T05:24:38.633Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "553/KKP/092025",
+      "filename": "Informatika_kkp_1759037078594.docx",
+      "file_path": "/workspaces/documet-template/templates/output/Informatika_kkp_1759037078594.docx",
+      "digital_signature": {
+        "signature": "926a3fbd14efbfb8252e4a72d8e55eab776d5a5daa4cddb9de8b10f03295df456872a504c6b625491627ac30d3487f2744b92c95f746301f807d55019cc0ee06",
+        "signer_id": "d896b2dda1cd0edb6521",
+        "signed_at": "2025-09-28T05:24:38.633Z",
+        "algorithm": "sha256-rsa"
+      },
+      "signer_id": "d896b2dda1cd0edb6521",
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "PT. Tech Indonesia",
+      "tempat_tujuan": "Jakarta",
+      "tanggal_hijriyah": "",
+      "tanggal_masehi": "",
+      "deskripsi": "Kerja praktik dalam bidang pengembangan web",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "Ahmad Rahman",
+          "nim": "2019001",
+          "semester": "6"
+        }
+      ],
+      "nama_ttd": "Dr. John Doe, M.Kom",
+      "nip_nidn": "198501012010011001",
+      "doc_id": 1
+    },
+    {
+      "id": 2,
+      "timestamp": "2025-09-28T05:32:25.392Z",
+      "document_type": "certificate",
+      "document_name": "Sertifikat",
+      "no_surat": "418/CERTIFICATE/092025",
+      "filename": "Informatika_certificate_1759037545380.docx",
+      "file_path": "/workspaces/documet-template/templates/output/Informatika_certificate_1759037545380.docx",
+      "digital_signature": {
+        "signature": "5088054afeb1b8e5b1a6f71465603e3ba35e3da275538a63aa32ac01d75e24c2778b9abc0da021199435d83e7fd767fe0841e878ba2b2b712e63ae87ee93810d",
+        "signer_id": "0b6d60a4826b0f25b276",
+        "signed_at": "2025-09-28T05:32:25.392Z",
+        "algorithm": "sha256-rsa"
+      },
+      "signer_id": "0b6d60a4826b0f25b276",
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/certificate.docx",
+      "nama_mhs": "Ahmad Rahman",
+      "nim": "2019001",
+      "nama_kegiatan": "Workshop Web Development",
+      "tanggal_hijriyah": "1447/04/05",
+      "tanggal_masehi": "2025-09-28",
+      "nilai_grade": "A",
+      "nama_ttd_1": "Dr. Jane Smith, M.Kom",
+      "nip_nidn_1": "198502022010012002",
+      "nama_ttd_2": "Prof. Dr. Ahmad Ali, M.T",
+      "nip_nidn_2": "197503032005011003",
+      "doc_id": 2
+    },
+    {
+      "id": 3,
+      "timestamp": "2025-09-28T06:36:17.816Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "872/KKP/092025",
+      "filename": "Informatika_kkp_1759041377780.docx",
+      "file_path": "/workspaces/documet-template/templates/output/Informatika_kkp_1759041377780.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "a",
+      "tempat_tujuan": "a",
+      "tanggal_hijriyah": "",
+      "tanggal_masehi": "",
+      "deskripsi": "aaaa",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "1",
+          "nim": "1",
+          "semester": "1"
+        }
+      ],
+      "nama_ttd": "Dr. Ir. Ar. Irnawaty Idrus ST.,MT.,IPM., IAI",
+      "nip_nidn": "0928088206",
+      "doc_id": 3
+    },
+    {
+      "id": "e3150454-ccb7-45c5-b13d-e58a789f416e",
+      "timestamp": "2025-09-28T08:26:16.939Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "291/KKP/092025",
+      "filename": "informatika_kkp_1759047976900.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_kkp_1759047976900.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "Test Company",
+      "tempat_tujuan": "Jakarta",
+      "tanggal_hijriyah": "6 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "28 September 2025 M",
+      "deskripsi": "Test description",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "John Doe",
+          "nim": "123456",
+          "semester": "6"
+        }
+      ],
+      "nama_ttd": "Dr. Test",
+      "nip_nidn": "123456789",
+      "doc_id": "e3150454-ccb7-45c5-b13d-e58a789f416e"
+    },
+    {
+      "id": "f8756ab5-435c-4fe8-83c2-5480bf02e6c4",
+      "timestamp": "2025-09-28T08:29:02.148Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "498/KKP/092025",
+      "filename": "informatika_kkp_1759048142114.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_kkp_1759048142114.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "1",
+      "tempat_tujuan": "1",
+      "tanggal_hijriyah": "6 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "28 September 2025 M",
+      "deskripsi": "q",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "q",
+          "nim": "q",
+          "semester": "q"
+        }
+      ],
+      "nama_ttd": "q",
+      "nip_nidn": "q",
+      "doc_id": "f8756ab5-435c-4fe8-83c2-5480bf02e6c4"
+    },
+    {
+      "id": "202e2b84-8f02-4a2a-a2a7-f551be3c9d7a",
+      "timestamp": "2025-09-28T08:32:15.770Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "983/KKP/092025",
+      "filename": "informatika_kkp_1759048335718.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_kkp_1759048335718.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "Test Company ENV",
+      "tempat_tujuan": "Jakarta",
+      "tanggal_hijriyah": "6 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "28 September 2025 M",
+      "deskripsi": "Test with environment variables",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "Jane Doe",
+          "nim": "654321",
+          "semester": "7"
+        }
+      ],
+      "nama_ttd": "Dr. Test ENV",
+      "nip_nidn": "987654321",
+      "doc_id": "202e2b84-8f02-4a2a-a2a7-f551be3c9d7a"
+    }
+  ],
+  "authorized_signers": [
+    {
+      "signer_id": "d896b2dda1cd0edb6521",
+      "nama_ttd": "Dr. John Doe, M.Kom",
+      "nip_nidn_hash": "d0a45feb9bc8169981f0ff091e678eed:d866f1f518b252a92d6c5ada20e5f08e02a9eb3f5ba8e376d842fb72bf1bd86e6cbcf780edf4d8e906e1a9bef105f3c206a2402e36c721235ee74984ba2b4e3c",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAMITPL+CFROuDWNhL8871QnDXjyQQbhnAapGQQCtJr0o=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIEfdaEQ51bOba0vzKPBg/MNUxkO92ii3ehgVgzenjIVR\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "38b01d8be7b39a35d3f919cb30ddcd66a714850ac9caddf4d9a7de736af7120ba40e60f2c1350c126a064ad1e686b90d59fe30d61c8e6224adc26640842ceffe",
+      "created_at": "2025-09-28T05:24:31.311Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
+    },
+    {
+      "signer_id": "0b6d60a4826b0f25b276",
+      "nama_ttd": "Dr. Jane Smith, M.Kom",
+      "nip_nidn_hash": "c96b70286283f9be33e697d4dc13e478:dba6f2b7997245effe048ff95a46b789895f353c9f86686cf3e25ba0a42d5c05379e026e672727cf81fdd6795f1ad15127fdbd45bf77b9468c2ff8216c47b2b0",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA+NTa4eSwwyWCwugYK0CklRBHOZLdNMwuL+F+90Aziog=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIMCe85D4ELQyUskaMRkocvdtgCtdozd6D+DI5MdR5lUN\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "2d01aa064f92af645e691ed8ac37b8e031f0074cb269bd47baf155f180a1dd8541a671207c4178b9029994861591511d44afb81d48a3ab214616e734584e2453",
+      "created_at": "2025-09-28T05:32:16.776Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
+    },
+    {
+      "signer_id": "52dc8df59ff9090e793e",
+      "nama_ttd": "Dr. Ir. Ar. Irnawaty Idrus ST.,MT.,IPM., IAI",
+      "nip_nidn_hash": "db1e68f22907c70edf17756aedf7d2dd:a7916b1879d0eb429d4e5914bd3470bc74e5c98a17f61eba359e01a83c78ebb332722d55154d4dfa9417d6fc502428355efc922add80b2744127ea79264791e0",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAJl4soxWChFLCajbPEYnVmlgFAyhC71gcfsqgzxXFprw=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEINvWEI/kmTjn1aOGJ3od9VNv8byra3yneCihOEnEaSjD\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "09c5ed08ed29cfe13d159c0416ab08e610e4eb87a6a76b84b04da2ba9f16613d0ddf6e1d0fb78edfec63c7a8d339c85a79486a82155110152f179a56b516f11e",
+      "created_at": "2025-09-28T06:36:17.512Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
+    },
+    {
+      "signer_id": "bae0a60cdd7709c01cad",
+      "nama_ttd": "dr",
+      "nip_nidn_hash": "0f8c3d0e7d09b7efdffa6b1fbc9684ca:39aff7f98344a3d2ac0a630d8f27234cfbb90c63398dc92fbac94951738cd5b21c03c7749006c235c931282df5062eb3824903248aa29596dadd4a813b9409b3",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAy0tPbCTlJAqrQl1YoYdBE0nKafrwRHXO1e+57hUVqFg=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIGFyTf7BENoJTsPiBIgiCC7E+VPa0EyHMyN90hrPF0aN\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "f62adb16fa40ba2cbfd73321c91536c23b542f861a458a6a7501eb1a010d6bbe49643f3582a74214f6a700a377621f97d6ecb3530786689e2cf17b3f83c80d3f",
+      "created_at": "2025-09-28T08:21:24.644Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
+    },
+    {
+      "signer_id": "44a66dbc7e1730f31f83",
+      "nama_ttd": "q",
+      "nip_nidn_hash": "d8698c34dcb2dcd39101650bfb607448:5a85b25b388157c91ec3caefef74e77fa5e99bae5aad8358912df20b3092fa76e104ef301255d365815a36c1726669dc6027ea3eb853cbd5873e3378f001945a",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA/A8npahZ+FpQJ5z/oh5z52We9kxUzN8X8R7sdUx3944=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIJcxhSToiv44OmPvq7uRcpJSqPAmBeQbrF7i6IE7jRNV\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "bfda352f4a226519c6c642ee2209468f71dce7b77353f4212578682f5ccba400bf4fb612bfa343ecb5582698fad6f026e9d2b60236a7a6ddec27c5f238a585df",
+      "created_at": "2025-09-28T08:29:02.005Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
+    }
+  ],
+  "config": {
+    "app_name": "Document Generator",
+    "version": "3.1.0-secure",
+    "description": "Secure document generator for Informatika with digital signature",
+    "prodi_name": "Informatika",
+    "fakultas": "Fakultas Teknik",
+    "universitas": "Universitas Example"
+  }
+}
