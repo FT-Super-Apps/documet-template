@@ -108,6 +108,84 @@ server.get('/api/document-fields/:type', (req, res) => {
   }
 });
 
+// Save custom template configuration
+server.post('/api/save-custom-template', (req, res) => {
+  try {
+    const { document_type, template_name, custom_fields } = req.body;
+
+    if (!document_type || !template_name || !custom_fields) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document type, template name, and custom fields are required'
+      });
+    }
+
+    const db = loadDatabase();
+
+    // Initialize custom_templates array if it doesn't exist
+    if (!db.custom_templates) {
+      db.custom_templates = [];
+    }
+
+    // Create new custom template
+    const customTemplate = {
+      id: `custom_${Date.now()}`,
+      document_type: document_type,
+      name: template_name,
+      fields: custom_fields,
+      created_at: new Date().toISOString(),
+      created_by: 'system' // Could be user ID in the future
+    };
+
+    db.custom_templates.push(customTemplate);
+
+    // Save to database
+    if (saveDatabase(db)) {
+      res.status(200).json({
+        success: true,
+        message: 'Custom template saved successfully',
+        template_id: customTemplate.id
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to save custom template'
+      });
+    }
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get custom templates
+server.get('/api/custom-templates/:document_type?', (req, res) => {
+  try {
+    const { document_type } = req.params;
+    const db = loadDatabase();
+
+    let customTemplates = db.custom_templates || [];
+
+    if (document_type) {
+      customTemplates = customTemplates.filter(template => template.document_type === document_type);
+    }
+
+    res.status(200).json({
+      success: true,
+      custom_templates: customTemplates
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 server.post('/api/check-signer', async (req, res) => {
   try {
     const { nama_ttd, nip_nidn } = req.body;
@@ -134,14 +212,14 @@ server.post('/api/check-signer', async (req, res) => {
   }
 });
 
-// Generate document
+// Generate document with custom fields support
 server.post('/generate-document', async (req, res) => {
   try {
     const data = req.body;
 
     // Validate document type
     const db = loadDatabase();
-    const documentTemplate = db.document_templates.find(template => template.type === data.document_type);
+    let documentTemplate = db.document_templates.find(template => template.type === data.document_type);
 
     if (!documentTemplate) {
       return res.status(400).json({
@@ -150,14 +228,26 @@ server.post('/generate-document', async (req, res) => {
       });
     }
 
-    // Build processed data dynamically based on template fields
+    // Handle custom fields if provided
+    let fieldsToProcess = documentTemplate.fields;
+    if (data.custom_fields && Array.isArray(data.custom_fields) && data.custom_fields.length > 0) {
+      // Use custom fields instead of template fields (except for KKP)
+      if (data.document_type !== 'kkp') {
+        fieldsToProcess = data.custom_fields;
+        console.log('Using custom fields for document generation:', fieldsToProcess);
+      } else {
+        console.log('KKP document detected - using standard template fields');
+      }
+    }
+
+    // Build processed data dynamically based on fields
     const processedData = {
       nama_prodi: 'Informatika',
       template_path: documentTemplate.template_path
     };
 
-    // Process each field from template
-    documentTemplate.fields.forEach(field => {
+    // Process each field
+    fieldsToProcess.forEach(field => {
       if (field.name === 'tableData') {
         // Handle table data
         if (data.tableData && Array.isArray(data.tableData)) {
@@ -167,8 +257,12 @@ server.post('/generate-document', async (req, res) => {
           }));
         }
       } else {
-        // Handle regular fields
-        processedData[field.name] = data[field.name] || field.default_value || '';
+        // Handle regular fields - use field variable name for mapping
+        const fieldValue = data[field.name] || field.default_value || '';
+        processedData[field.name] = fieldValue;
+
+        // Log field mapping for debugging
+        console.log(`Field mapping: ${field.label || field.name} -> ${field.name} = "${fieldValue}"`);
       }
     });
 

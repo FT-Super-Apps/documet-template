@@ -408,6 +408,82 @@
       "nama_ttd": "Dr. Test ENV",
       "nip_nidn": "987654321",
       "doc_id": "202e2b84-8f02-4a2a-a2a7-f551be3c9d7a"
+    },
+    {
+      "id": "94d4c29b-a711-4271-b948-a7e75b6df214",
+      "timestamp": "2025-09-29T05:32:54.662Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "060/KKP/092025",
+      "filename": "informatika_kkp_1759123974628.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_kkp_1759123974628.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "a",
+      "tempat_tujuan": "a",
+      "tanggal_hijriyah": "7 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "29 September 2025 M",
+      "deskripsi": "",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "1",
+          "nim": "1",
+          "semester": "1"
+        }
+      ],
+      "nama_ttd": "a",
+      "nip_nidn": "a",
+      "doc_id": "94d4c29b-a711-4271-b948-a7e75b6df214"
+    },
+    {
+      "id": "3b415352-74e6-4f23-9aa6-5b52df18f41e",
+      "timestamp": "2025-09-29T05:34:10.851Z",
+      "document_type": "certificate",
+      "document_name": "Sertifikat",
+      "no_surat": "895/CERTIFICATE/092025",
+      "filename": "informatika_certificate_1759124050841.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_certificate_1759124050841.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/certificate.docx",
+      "nama_peserta": "John Doe Testing",
+      "nomor_sertifikat": "CERT/2025/TEST001",
+      "tanggal_hijriyah": "7 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "29 September 2025 M",
+      "doc_id": "3b415352-74e6-4f23-9aa6-5b52df18f41e"
+    },
+    {
+      "id": "1db45fd5-a5aa-454c-9ae2-07b59e885a9f",
+      "timestamp": "2025-09-29T05:34:34.010Z",
+      "document_type": "kkp",
+      "document_name": "Surat Permohonan KKP",
+      "no_surat": "618/KKP/092025",
+      "filename": "informatika_kkp_1759124073999.docx",
+      "file_path": "/workspaces/documet-template/templates/output/informatika_kkp_1759124073999.docx",
+      "digital_signature": null,
+      "signer_id": null,
+      "nama_prodi": "Informatika",
+      "template_path": "templates/informatika/kkp.docx",
+      "kepada": "PT. Dynamic Test",
+      "tempat_tujuan": "Jakarta",
+      "tanggal_hijriyah": "7 Rabiul Akhir 1447 H",
+      "tanggal_masehi": "29 September 2025 M",
+      "deskripsi": "Testing KKP dengan sistem dinamis",
+      "tableData": [
+        {
+          "no": 1,
+          "nama": "Test Student",
+          "nim": "2025001",
+          "semester": "6"
+        }
+      ],
+      "nama_ttd": "Dr. Test KKP",
+      "nip_nidn": "123456789",
+      "doc_id": "1db45fd5-a5aa-454c-9ae2-07b59e885a9f"
     }
   ],
   "authorized_signers": [
@@ -475,6 +551,19 @@
       "status": "active",
       "last_used": null,
       "usage_count": 0
+    },
+    {
+      "signer_id": "ad08d8d44d1618163e5b",
+      "nama_ttd": "a",
+      "nip_nidn_hash": "446c8bfa71307a4869a79249adec02ef:483e48dceb6ceff8011c045270994ab2bb03237c5a87e09f7a43f4bca6973da953f21833d8d271a48bb75ea8d1f96a89a4d9ebf16db53ae37236528bc9f727cf",
+      "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA9t7jUz0G1e6JieHtcIwVbavR7/ePYvlCz0eIdMJOSYY=\n-----END PUBLIC KEY-----\n",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIJzmv/q96d3W8Jauj1lkVk6ADF7f6rfNJYSKBPFl4NC6\n-----END PRIVATE KEY-----\n",
+      "algorithm": "Ed25519",
+      "key_fingerprint": "4c02b0c2b9f22c8dad470f7400315a68eb0e9925b1b766067bb5a835f759ee78c2d86f83c2d823f97e5b22eaa558ea667e95978052add9c17fde587e1379ad53",
+      "created_at": "2025-09-29T05:32:54.356Z",
+      "status": "active",
+      "last_used": null,
+      "usage_count": 0
     }
   ],
   "config": {
@@ -484,5 +573,30 @@
     "prodi_name": "Informatika",
     "fakultas": "Fakultas Teknik",
     "universitas": "Universitas Example"
-  }
+  },
+  "custom_templates": [
+    {
+      "id": "custom_1759123988665",
+      "document_type": "certificate",
+      "name": "Template Test Dinamis",
+      "fields": [
+        {
+          "name": "nama_peserta",
+          "label": "Nama Peserta",
+          "type": "text",
+          "required": true,
+          "placeholder": "Masukkan nama peserta"
+        },
+        {
+          "name": "nomor_sertifikat",
+          "label": "Nomor Sertifikat",
+          "type": "text",
+          "required": true,
+          "placeholder": "Contoh: CERT/2025/001"
+        }
+      ],
+      "created_at": "2025-09-29T05:33:08.665Z",
+      "created_by": "system"
+    }
+  ]
 }
