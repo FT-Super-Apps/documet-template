@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const generateDocument = require('./utils/generate-document');
 const { setDate } = require('./utils/generate-date');
@@ -32,6 +33,41 @@ function saveDatabase(data) {
     return false;
   }
 }
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, 'templates', 'informatika');
+    // Ensure directory exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Keep original filename or use document type + timestamp
+    const originalName = file.originalname;
+    const ext = path.extname(originalName);
+    const nameWithoutExt = path.basename(originalName, ext);
+    const timestamp = Date.now();
+    cb(null, `${nameWithoutExt}_${timestamp}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    // Only allow .docx files
+    if (path.extname(file.originalname).toLowerCase() === '.docx') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .docx files are allowed'));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
 
 // Middleware
 server.use('/templates', express.static(path.join(__dirname, 'templates')));
@@ -177,6 +213,194 @@ server.get('/api/custom-templates/:document_type?', (req, res) => {
       success: true,
       custom_templates: customTemplates
     });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Upload template endpoint
+server.post('/api/upload-template', upload.single('template_file'), (req, res) => {
+  try {
+    const { document_type, template_name, template_description, template_fields } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'File template (.docx) wajib diupload'
+      });
+    }
+
+    if (!document_type || !template_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jenis dokumen dan nama template wajib diisi'
+      });
+    }
+
+    const db = loadDatabase();
+
+    // Parse fields if provided
+    let fields = [];
+    if (template_fields) {
+      try {
+        fields = JSON.parse(template_fields);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Format field tidak valid'
+        });
+      }
+    }
+
+    // Create template path relative to templates directory
+    const templatePath = `templates/informatika/${req.file.filename}`;
+
+    // Generate unique template type ID
+    const templateType = `${document_type}_${Date.now()}`;
+
+    // Create new template entry
+    const newTemplate = {
+      type: templateType,
+      name: template_name,
+      template_path: templatePath,
+      description: template_description || `Template ${template_name} yang diupload`,
+      fields: fields.length > 0 ? fields : [
+        {
+          name: "nama",
+          label: "Nama",
+          type: "text",
+          required: true,
+          placeholder: "Masukkan nama"
+        }
+      ],
+      uploaded_at: new Date().toISOString(),
+      original_filename: req.file.originalname,
+      file_size: req.file.size
+    };
+
+    // Add to document_templates array
+    if (!db.document_templates) {
+      db.document_templates = [];
+    }
+
+    db.document_templates.push(newTemplate);
+
+    // Save to database
+    if (saveDatabase(db)) {
+      res.status(200).json({
+        success: true,
+        message: 'Template berhasil diupload',
+        template: {
+          type: templateType,
+          name: template_name,
+          template_path: templatePath,
+          original_filename: req.file.originalname
+        }
+      });
+    } else {
+      // If save failed, remove uploaded file
+      fs.unlinkSync(req.file.path);
+      res.status(500).json({
+        success: false,
+        message: 'Gagal menyimpan template ke database'
+      });
+    }
+
+  } catch (error) {
+    console.error('Upload template error:', error);
+
+    // Clean up uploaded file if there was an error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Terjadi kesalahan saat upload template'
+    });
+  }
+});
+
+// Get all uploaded templates
+server.get('/api/uploaded-templates', (req, res) => {
+  try {
+    const db = loadDatabase();
+
+    // Filter only uploaded templates (those with uploaded_at field)
+    const uploadedTemplates = db.document_templates
+      ? db.document_templates.filter(template => template.uploaded_at)
+      : [];
+
+    res.status(200).json({
+      success: true,
+      templates: uploadedTemplates
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Delete uploaded template
+server.delete('/api/template/:templateType', (req, res) => {
+  try {
+    const { templateType } = req.params;
+    const db = loadDatabase();
+
+    if (!db.document_templates) {
+      return res.status(404).json({
+        success: false,
+        message: 'Template tidak ditemukan'
+      });
+    }
+
+    // Find template
+    const templateIndex = db.document_templates.findIndex(t => t.type === templateType);
+
+    if (templateIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Template tidak ditemukan'
+      });
+    }
+
+    const template = db.document_templates[templateIndex];
+
+    // Check if it's an uploaded template (has uploaded_at field)
+    if (!template.uploaded_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'Hanya template yang diupload yang dapat dihapus'
+      });
+    }
+
+    // Remove file from filesystem
+    const fullPath = path.join(__dirname, template.template_path);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+
+    // Remove from database
+    db.document_templates.splice(templateIndex, 1);
+
+    if (saveDatabase(db)) {
+      res.status(200).json({
+        success: true,
+        message: 'Template berhasil dihapus'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Gagal menghapus template dari database'
+      });
+    }
 
   } catch (error) {
     res.status(500).json({

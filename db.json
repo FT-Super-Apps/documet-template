@@ -227,6 +227,38 @@
           "placeholder": "197503032005011003"
         }
       ]
+    },
+    {
+      "type": "certificate_1759207919856",
+      "name": "Sertifikat Kelulusan Kustom",
+      "template_path": "templates/informatika/test_template_surat_rekomendasi_1759207919846.docx",
+      "description": "Template sertifikat kelulusan yang dapat dikustomisasi",
+      "fields": [
+        {
+          "name": "nama_penerima",
+          "label": "Nama Penerima",
+          "type": "text",
+          "placeholder": "Masukkan nama penerima sertifikat",
+          "required": true
+        },
+        {
+          "name": "program_studi",
+          "label": "Program Studi",
+          "type": "text",
+          "placeholder": "Informatika",
+          "required": true
+        },
+        {
+          "name": "tanggal_lulus",
+          "label": "Tanggal Kelulusan",
+          "type": "date",
+          "placeholder": "",
+          "required": true
+        }
+      ],
+      "uploaded_at": "2025-09-30T04:51:59.856Z",
+      "original_filename": "test_template_surat_rekomendasi.docx",
+      "file_size": 2021298
     }
   ],
   "generated_documents": [

@@ -383,6 +383,82 @@
                 <p>Pilih jenis dokumen untuk menampilkan form yang sesuai. Sistem akan otomatis membuat kunci digital untuk penandatangan baru.</p>
             </div>
 
+            <!-- Template Management Section -->
+            <div id="templateManagementSection" style="display: none;">
+                <div class="info-box" style="background: #f0f8ff; border-left-color: #4169e1;">
+                    <h3>📤 Upload Template Baru</h3>
+                    <p>Upload file .docx template yang sudah disetup dengan variabel yang diperlukan untuk jenis dokumen tertentu.</p>
+                </div>
+
+                <div class="upload-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <form id="uploadTemplateForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="upload_document_type">Jenis Dokumen <span class="required">*</span></label>
+                                    <select id="upload_document_type" name="upload_document_type" required>
+                                        <option value="">Pilih Jenis Dokumen</option>
+                                        <option value="kkp">📄 Surat Permohonan KKP</option>
+                                        <option value="certificate">🏆 Sertifikat</option>
+                                        <option value="lembar_pengesahan">📋 Lembar Pengesahan</option>
+                                        <option value="custom">📄 Jenis Dokumen Lainnya</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="template_name">Nama Template <span class="required">*</span></label>
+                                    <input type="text" id="template_name" name="template_name" placeholder="Contoh: Template Surat Rekomendasi" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="template_description">Deskripsi Template</label>
+                            <textarea id="template_description" name="template_description" rows="2" placeholder="Deskripsi singkat tentang template ini..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="template_file">File Template (.docx) <span class="required">*</span></label>
+                            <input type="file" id="template_file" name="template_file" accept=".docx" required style="padding: 10px; border: 2px dashed #dee2e6; background: white;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📝 Field Template (Opsional)</label>
+                            <div id="templateFieldsContainer" style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">Tambahkan field yang akan digunakan dalam template. Jika kosong, sistem akan menggunakan field default.</p>
+                                <button type="button" class="add-btn" onclick="addTemplateField()">+ Tambah Field</button>
+                                <div id="templateFieldsList"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            📤 Upload Template
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Uploaded Templates List -->
+                <div class="uploaded-templates-section" style="margin-top: 30px;">
+                    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+                        <h3>📋 Template yang Diupload</h3>
+                        <p>Daftar template yang sudah diupload ke sistem. Klik refresh untuk memperbarui daftar.</p>
+                        <button type="button" class="add-btn" onclick="loadUploadedTemplates()" style="background: #17a2b8;">🔄 Refresh</button>
+                    </div>
+                    <div id="uploadedTemplatesList" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- Mode Toggle Buttons -->
+            <div style="margin: 20px 0; text-align: center;">
+                <button type="button" class="submit-btn" id="documentModeBtn" onclick="toggleMode('document')" style="margin: 0 10px; width: auto; padding: 15px 30px;">
+                    📄 Buat Dokumen
+                </button>
+                <button type="button" class="submit-btn" id="templateModeBtn" onclick="toggleMode('template')" style="margin: 0 10px; width: auto; padding: 15px 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    📤 Kelola Template
+                </button>
+            </div>
+
             <form id="documentForm">
                 <div class="form-group">
                     <label for="document_type">Jenis Dokumen <span class="required">*</span></label>
@@ -460,6 +536,8 @@
         let customFields = [];
         let currentDocumentType = '';
         let isKkpDocument = false;
+        let templateFields = [];
+        let currentMode = 'document'; // 'document' or 'template'
 
         // Load document templates from server
         async function loadDocumentTemplates() {
@@ -1115,6 +1193,197 @@
                 }
             }, 100);
         };
+
+        // Toggle between document creation and template management modes
+        function toggleMode(mode) {
+            currentMode = mode;
+            const documentModeBtn = document.getElementById('documentModeBtn');
+            const templateModeBtn = document.getElementById('templateModeBtn');
+            const documentForm = document.getElementById('documentForm');
+            const templateManagementSection = document.getElementById('templateManagementSection');
+
+            if (mode === 'document') {
+                documentModeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                templateModeBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                documentForm.style.display = 'block';
+                templateManagementSection.style.display = 'none';
+            } else {
+                documentModeBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                templateModeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                documentForm.style.display = 'none';
+                templateManagementSection.style.display = 'block';
+                loadUploadedTemplates();
+            }
+        }
+
+        // Add template field for upload form
+        function addTemplateField() {
+            const container = document.getElementById('templateFieldsList');
+            const fieldId = 'template_field_' + Date.now();
+
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'field-manager-row';
+            fieldDiv.id = fieldId;
+
+            fieldDiv.innerHTML = `
+                <input type="text" class="field-name" placeholder="Label Field" style="flex: 2;">
+                <input type="text" class="field-placeholder" placeholder="Placeholder" style="flex: 2;">
+                <select class="field-type" style="flex: 1;">
+                    <option value="text">Text</option>
+                    <option value="textarea">Textarea</option>
+                    <option value="date">Date</option>
+                    <option value="number">Number</option>
+                    <option value="email">Email</option>
+                </select>
+                <input type="text" class="field-variable" placeholder="Variable name" style="flex: 2;">
+                <div class="field-actions">
+                    <button type="button" class="btn-small btn-danger" onclick="removeTemplateField('${fieldId}')">🗑️</button>
+                </div>
+            `;
+
+            container.appendChild(fieldDiv);
+        }
+
+        // Remove template field
+        function removeTemplateField(fieldId) {
+            document.getElementById(fieldId).remove();
+        }
+
+        // Upload template form submission
+        document.getElementById('uploadTemplateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const uploadDocumentType = document.getElementById('upload_document_type').value;
+            const templateName = document.getElementById('template_name').value;
+            const templateDescription = document.getElementById('template_description').value;
+            const templateFile = document.getElementById('template_file').files[0];
+
+            if (!uploadDocumentType || !templateName || !templateFile) {
+                alert('Jenis dokumen, nama template, dan file template wajib diisi');
+                return;
+            }
+
+            // Collect template fields
+            const fieldRows = document.querySelectorAll('#templateFieldsList .field-manager-row');
+            const fields = [];
+
+            fieldRows.forEach(row => {
+                const label = row.querySelector('.field-name').value;
+                const placeholder = row.querySelector('.field-placeholder').value;
+                const type = row.querySelector('.field-type').value;
+                const variable = row.querySelector('.field-variable').value;
+
+                if (label && variable) {
+                    fields.push({
+                        name: variable,
+                        label: label,
+                        type: type,
+                        placeholder: placeholder,
+                        required: true
+                    });
+                }
+            });
+
+            formData.append('document_type', uploadDocumentType);
+            formData.append('template_name', templateName);
+            formData.append('template_description', templateDescription);
+            formData.append('template_file', templateFile);
+
+            if (fields.length > 0) {
+                formData.append('template_fields', JSON.stringify(fields));
+            }
+
+            try {
+                const response = await fetch('/api/upload-template', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Template berhasil diupload!');
+                    document.getElementById('uploadTemplateForm').reset();
+                    document.getElementById('templateFieldsList').innerHTML = '';
+                    loadUploadedTemplates();
+                } else {
+                    alert('Gagal upload template: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Terjadi kesalahan saat upload template');
+            }
+        });
+
+        // Load uploaded templates
+        async function loadUploadedTemplates() {
+            try {
+                const response = await fetch('/api/uploaded-templates');
+                const data = await response.json();
+
+                const container = document.getElementById('uploadedTemplatesList');
+
+                if (data.success && data.templates.length > 0) {
+                    let html = '<div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+
+                    data.templates.forEach(template => {
+                        const uploadDate = new Date(template.uploaded_at).toLocaleDateString('id-ID');
+                        const fileSize = (template.file_size / 1024).toFixed(1);
+
+                        html += `
+                            <div style="padding: 15px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h4 style="margin: 0 0 5px 0; color: #333;">${template.name}</h4>
+                                    <p style="margin: 0; color: #6c757d; font-size: 14px;">${template.description}</p>
+                                    <div style="margin-top: 5px; font-size: 12px; color: #6c757d;">
+                                        <span>📅 ${uploadDate}</span> |
+                                        <span>📄 ${template.original_filename}</span> |
+                                        <span>💾 ${fileSize} KB</span> |
+                                        <span>🏷️ ${template.type}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn-small btn-danger" onclick="deleteTemplate('${template.type}')">🗑️ Hapus</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Belum ada template yang diupload</div>';
+                }
+            } catch (error) {
+                console.error('Error loading uploaded templates:', error);
+            }
+        }
+
+        // Delete template
+        async function deleteTemplate(templateType) {
+            if (!confirm('Yakin ingin menghapus template ini?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/template/${templateType}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Template berhasil dihapus!');
+                    loadUploadedTemplates();
+                } else {
+                    alert('Gagal menghapus template: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Terjadi kesalahan saat menghapus template');
+            }
+        }
     </script>
 </body>
 </html>
