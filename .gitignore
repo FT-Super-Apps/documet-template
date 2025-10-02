@@ -1,4 +1,7 @@
-node_modules
-# Keep environment variables out of version control
+node_modules/
 .env
-
+uploads/
+templates/output/
+templates/qr-code/
+*.log
+.DS_Store

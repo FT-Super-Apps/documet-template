@@ -5,8 +5,10 @@ const cors = require('cors');
 const fs = require('fs');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const generateDocument = require('./utils/generate-document');
-const { setDate } = require('./utils/generate-date');
+const PizZip = require('pizzip');
+const Docxtemplater = require('docxtemplater');
+const ImageModule = require('docxtemplater-image-module-free');
+const { generateQRCodeWithImage } = require('./utils/generate-qrcode');
 const signerService = require('./services/signer-service');
 
 const server = express();
@@ -20,7 +22,11 @@ function loadDatabase() {
     return JSON.parse(rawData);
   } catch (error) {
     console.error('Error loading database:', error);
-    return { generated_documents: [], config: {} };
+    return {
+      signed_documents: [],
+      authorized_signers: [],
+      config: {}
+    };
   }
 }
 
@@ -37,18 +43,15 @@ function saveDatabase(data) {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, 'templates', 'informatika');
-    // Ensure directory exists
+    const uploadPath = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    // Keep original filename or use document type + timestamp
-    const originalName = file.originalname;
-    const ext = path.extname(originalName);
-    const nameWithoutExt = path.basename(originalName, ext);
+    const ext = path.extname(file.originalname);
+    const nameWithoutExt = path.basename(file.originalname, ext);
     const timestamp = Date.now();
     cb(null, `${nameWithoutExt}_${timestamp}${ext}`);
   }
@@ -57,7 +60,6 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   fileFilter: function (req, file, cb) {
-    // Only allow .docx files
     if (path.extname(file.originalname).toLowerCase() === '.docx') {
       cb(null, true);
     } else {
@@ -85,233 +87,121 @@ server.get('/verify', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'verify.html'));
 });
 
-// API endpoints for dynamic forms
-server.get('/api/document-templates', (req, res) => {
+// API: Sign document
+server.post('/api/sign-document', upload.single('document'), async (req, res) => {
   try {
-    const db = loadDatabase();
-    const templates = {};
-
-    db.document_templates.forEach(template => {
-      if (!templates[template.type]) {
-        templates[template.type] = [];
-      }
-      templates[template.type].push({
-        name: template.name,
-        description: template.description,
-        template_path: template.template_path
-      });
-    });
-
-    res.status(200).json({
-      success: true,
-      templates: templates
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-server.get('/api/document-fields/:type', (req, res) => {
-  try {
-    const { type } = req.params;
-    const db = loadDatabase();
-
-    const template = db.document_templates.find(t => t.type === type);
-
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        message: 'Document type not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      fields: template.fields,
-      template: {
-        name: template.name,
-        description: template.description
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Save custom template configuration
-server.post('/api/save-custom-template', (req, res) => {
-  try {
-    const { document_type, template_name, custom_fields } = req.body;
-
-    if (!document_type || !template_name || !custom_fields) {
-      return res.status(400).json({
-        success: false,
-        message: 'Document type, template name, and custom fields are required'
-      });
-    }
-
-    const db = loadDatabase();
-
-    // Initialize custom_templates array if it doesn't exist
-    if (!db.custom_templates) {
-      db.custom_templates = [];
-    }
-
-    // Create new custom template
-    const customTemplate = {
-      id: `custom_${Date.now()}`,
-      document_type: document_type,
-      name: template_name,
-      fields: custom_fields,
-      created_at: new Date().toISOString(),
-      created_by: 'system' // Could be user ID in the future
-    };
-
-    db.custom_templates.push(customTemplate);
-
-    // Save to database
-    if (saveDatabase(db)) {
-      res.status(200).json({
-        success: true,
-        message: 'Custom template saved successfully',
-        template_id: customTemplate.id
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to save custom template'
-      });
-    }
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Get custom templates
-server.get('/api/custom-templates/:document_type?', (req, res) => {
-  try {
-    const { document_type } = req.params;
-    const db = loadDatabase();
-
-    let customTemplates = db.custom_templates || [];
-
-    if (document_type) {
-      customTemplates = customTemplates.filter(template => template.document_type === document_type);
-    }
-
-    res.status(200).json({
-      success: true,
-      custom_templates: customTemplates
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Upload template endpoint
-server.post('/api/upload-template', upload.single('template_file'), (req, res) => {
-  try {
-    const { document_type, template_name, template_description, template_fields } = req.body;
+    const { signer_name, signer_nip, document_title, notes } = req.body;
 
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'File template (.docx) wajib diupload'
+        message: 'File dokumen (.docx) wajib diupload'
       });
     }
 
-    if (!document_type || !template_name) {
+    if (!signer_name || !signer_nip) {
       return res.status(400).json({
         success: false,
-        message: 'Jenis dokumen dan nama template wajib diisi'
+        message: 'Nama penandatangan dan NIP/NIDN wajib diisi'
       });
     }
 
-    const db = loadDatabase();
+    // Generate unique document ID
+    const docId = uuidv4();
 
-    // Parse fields if provided
-    let fields = [];
-    if (template_fields) {
-      try {
-        fields = JSON.parse(template_fields);
-      } catch (error) {
-        return res.status(400).json({
-          success: false,
-          message: 'Format field tidak valid'
-        });
-      }
-    }
+    // Generate unique keypair and signature for THIS document only
+    const signatureInfo = await signerService.generateDocumentSignature(signer_name, docId);
 
-    // Create template path relative to templates directory
-    const templatePath = `templates/informatika/${req.file.filename}`;
+    // Read uploaded document
+    const uploadedFilePath = req.file.path;
+    const templateContent = fs.readFileSync(uploadedFilePath, 'binary');
+    const zip = new PizZip(templateContent);
 
-    // Generate unique template type ID
-    const templateType = `${document_type}_${Date.now()}`;
+    // Generate QR Code for verification
+    const verificationUrl = `${BASE_URL}/verify?id=${docId}`;
+    const qrCodePath = await generateQRCodeWithImage(verificationUrl);
 
-    // Create new template entry
-    const newTemplate = {
-      type: templateType,
-      name: template_name,
-      template_path: templatePath,
-      description: template_description || `Template ${template_name} yang diupload`,
-      fields: fields.length > 0 ? fields : [
-        {
-          name: "nama",
-          label: "Nama",
-          type: "text",
-          required: true,
-          placeholder: "Masukkan nama"
+    // Setup image module for QR Code
+    const imageModuleOpts = {
+      centered: true,
+      fileType: 'docx',
+      getImage: (tagValue) => {
+        if (tagValue === 'qrCode') {
+          return fs.readFileSync(qrCodePath);
         }
-      ],
-      uploaded_at: new Date().toISOString(),
-      original_filename: req.file.originalname,
-      file_size: req.file.size
+        throw new Error(`Tag ${tagValue} tidak dikenal`);
+      },
+      getSize: () => {
+        return [100, 100];
+      },
     };
 
-    // Add to document_templates array
-    if (!db.document_templates) {
-      db.document_templates = [];
+    const imageModule = new ImageModule(imageModuleOpts);
+    const doc = new Docxtemplater()
+      .attachModule(imageModule)
+      .loadZip(zip);
+
+    // Render document with QR Code
+    doc.setData({
+      qrCode: 'qrCode'
+    });
+
+    doc.render();
+
+    // Save signed document
+    const outputDir = path.resolve(__dirname, 'templates', 'output');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    db.document_templates.push(newTemplate);
+    const timestamp = Date.now();
+    const originalName = path.basename(req.file.originalname, '.docx');
+    const outputFilename = `signed_${originalName}_${timestamp}.docx`;
+    const outputPath = path.join(outputDir, outputFilename);
+
+    const buffer = doc.getZip().generate({ type: 'nodebuffer' });
+    fs.writeFileSync(outputPath, buffer);
+
+    // Clean up uploaded file
+    fs.unlinkSync(uploadedFilePath);
 
     // Save to database
-    if (saveDatabase(db)) {
-      res.status(200).json({
-        success: true,
-        message: 'Template berhasil diupload',
-        template: {
-          type: templateType,
-          name: template_name,
-          template_path: templatePath,
-          original_filename: req.file.originalname
-        }
-      });
-    } else {
-      // If save failed, remove uploaded file
-      fs.unlinkSync(req.file.path);
-      res.status(500).json({
-        success: false,
-        message: 'Gagal menyimpan template ke database'
-      });
-    }
+    const db = loadDatabase();
+    const signedDoc = {
+      id: docId,
+      filename: outputFilename,
+      file_path: outputPath,
+      document_title: document_title || 'Untitled Document',
+      original_filename: req.file.originalname,
+      signer_name,
+      signer_nip,
+      digital_signature: {
+        signature: signatureInfo.signature,
+        public_key: signatureInfo.public_key,
+        algorithm: signatureInfo.algorithm,
+        fingerprint: signatureInfo.fingerprint,
+        signed_at: signatureInfo.signed_at
+      },
+      notes: notes || '',
+      timestamp: new Date().toISOString(),
+      verification_url: verificationUrl
+    };
+
+    db.signed_documents.push(signedDoc);
+    saveDatabase(db);
+
+    res.status(200).json({
+      success: true,
+      id: docId,
+      filename: outputFilename,
+      signer_name,
+      public_key: signatureInfo.public_key,
+      verification_url: verificationUrl,
+      message: 'Dokumen berhasil ditandatangani dengan keypair unik EdDSA'
+    });
 
   } catch (error) {
-    console.error('Upload template error:', error);
+    console.error('Error signing document:', error);
 
     // Clean up uploaded file if there was an error
     if (req.file && fs.existsSync(req.file.path)) {
@@ -320,246 +210,18 @@ server.post('/api/upload-template', upload.single('template_file'), (req, res) =
 
     res.status(500).json({
       success: false,
-      message: error.message || 'Terjadi kesalahan saat upload template'
+      message: error.message || 'Terjadi kesalahan saat menandatangani dokumen'
     });
   }
 });
 
-// Get all uploaded templates
-server.get('/api/uploaded-templates', (req, res) => {
-  try {
-    const db = loadDatabase();
-
-    // Filter only uploaded templates (those with uploaded_at field)
-    const uploadedTemplates = db.document_templates
-      ? db.document_templates.filter(template => template.uploaded_at)
-      : [];
-
-    res.status(200).json({
-      success: true,
-      templates: uploadedTemplates
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Delete uploaded template
-server.delete('/api/template/:templateType', (req, res) => {
-  try {
-    const { templateType } = req.params;
-    const db = loadDatabase();
-
-    if (!db.document_templates) {
-      return res.status(404).json({
-        success: false,
-        message: 'Template tidak ditemukan'
-      });
-    }
-
-    // Find template
-    const templateIndex = db.document_templates.findIndex(t => t.type === templateType);
-
-    if (templateIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Template tidak ditemukan'
-      });
-    }
-
-    const template = db.document_templates[templateIndex];
-
-    // Check if it's an uploaded template (has uploaded_at field)
-    if (!template.uploaded_at) {
-      return res.status(400).json({
-        success: false,
-        message: 'Hanya template yang diupload yang dapat dihapus'
-      });
-    }
-
-    // Remove file from filesystem
-    const fullPath = path.join(__dirname, template.template_path);
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-    }
-
-    // Remove from database
-    db.document_templates.splice(templateIndex, 1);
-
-    if (saveDatabase(db)) {
-      res.status(200).json({
-        success: true,
-        message: 'Template berhasil dihapus'
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Gagal menghapus template dari database'
-      });
-    }
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-server.post('/api/check-signer', async (req, res) => {
-  try {
-    const { nama_ttd, nip_nidn } = req.body;
-
-    if (!nama_ttd || !nip_nidn) {
-      return res.status(400).json({
-        success: false,
-        message: 'Nama penandatangan dan NIP/NIDN wajib diisi'
-      });
-    }
-
-    const result = await signerService.registerSigner(nama_ttd, nip_nidn);
-
-    res.status(200).json({
-      success: true,
-      ...result
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Generate document with custom fields support
-server.post('/generate-document', async (req, res) => {
-  try {
-    const data = req.body;
-
-    // Validate document type
-    const db = loadDatabase();
-    let documentTemplate = db.document_templates.find(template => template.type === data.document_type);
-
-    if (!documentTemplate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Jenis dokumen tidak valid'
-      });
-    }
-
-    // Handle custom fields if provided
-    let fieldsToProcess = documentTemplate.fields;
-    if (data.custom_fields && Array.isArray(data.custom_fields) && data.custom_fields.length > 0) {
-      // Use custom fields instead of template fields (except for KKP)
-      if (data.document_type !== 'kkp') {
-        fieldsToProcess = data.custom_fields;
-        console.log('Using custom fields for document generation:', fieldsToProcess);
-      } else {
-        console.log('KKP document detected - using standard template fields');
-      }
-    }
-
-    // Build processed data dynamically based on fields
-    const processedData = {
-      nama_prodi: 'Informatika',
-      template_path: documentTemplate.template_path
-    };
-
-    // Process each field
-    fieldsToProcess.forEach(field => {
-      if (field.name === 'tableData') {
-        // Handle table data
-        if (data.tableData && Array.isArray(data.tableData)) {
-          processedData.tableData = data.tableData.map((item, index) => ({
-            no: index + 1,
-            ...item,
-          }));
-        }
-      } else {
-        // Handle regular fields - use field variable name for mapping
-        const fieldValue = data[field.name] || field.default_value || '';
-        processedData[field.name] = fieldValue;
-
-        // Log field mapping for debugging
-        console.log(`Field mapping: ${field.label || field.name} -> ${field.name} = "${fieldValue}"`);
-      }
-    });
-
-    // Process dates - use current date if not provided
-    const { tanggalHijriah, tanggalMasehi } = setDate(data.tanggal_hijriyah, data.tanggal_masehi);
-    processedData.tanggal_hijriyah = tanggalHijriah;
-    processedData.tanggal_masehi = tanggalMasehi;
-
-    // Generate secure document ID using UUID
-    const dbData = loadDatabase();
-    const docId = uuidv4();
-    processedData.doc_id = docId;
-
-    // Generate document
-    const result = await generateDocument(data.document_type, 'informatika', processedData);
-
-    // Create digital signature if signer info provided
-    let digitalSignature = null;
-    if (data.signer_info && data.signer_info.signer_id) {
-      try {
-        digitalSignature = signerService.signDocument(processedData, data.signer_info.signer_id);
-      } catch (error) {
-        console.warn('Failed to create digital signature:', error.message);
-      }
-    }
-
-    // Save to database
-    const newDoc = {
-      id: docId,
-      timestamp: new Date().toISOString(),
-      document_type: data.document_type,
-      document_name: documentTemplate.name,
-      no_surat: result.no_surat,
-      filename: path.basename(result.filePath),
-      file_path: result.filePath,
-      digital_signature: digitalSignature,
-      signer_id: data.signer_info?.signer_id || null,
-      ...processedData
-    };
-
-    dbData.generated_documents.push(newDoc);
-    saveDatabase(dbData);
-
-    // Generate QR code URL for verification
-    const verificationUrl = `${BASE_URL}/verify?id=${newDoc.id}`;
-
-    res.status(200).json({
-      success: true,
-      id: newDoc.id,
-      no_surat: result.no_surat,
-      filename: path.basename(result.filePath),
-      verification_url: verificationUrl,
-      signature: digitalSignature ? true : false,
-      signer_id: data.signer_info?.signer_id || null,
-      message: `${documentTemplate.name} berhasil dibuat`
-    });
-
-  } catch (error) {
-    console.error('Error generating document:', error);
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Verify document
+// API: Verify document (with multiple signatures support)
 server.get('/verify-document/:id', (req, res) => {
   try {
     const { id } = req.params;
     const db = loadDatabase();
 
-    const document = db.generated_documents.find(doc => doc.id === id);
+    const document = db.signed_documents.find(doc => doc.id === id);
 
     if (!document) {
       return res.status(404).json({
@@ -569,11 +231,85 @@ server.get('/verify-document/:id', (req, res) => {
       });
     }
 
+    // Check if document has multiple signatures (new format) or single signature (old format)
+    const signatures = document.signatures || [];
+    const validatedSignatures = [];
+
+    if (signatures.length > 0) {
+      // New format: multiple signatures
+      signatures.forEach(sig => {
+        try {
+          const verificationResult = signerService.verifyDocumentWithPublicKey(
+            sig.signer_name,
+            sig.signature,
+            sig.public_key
+          );
+
+          validatedSignatures.push({
+            signer_name: sig.signer_name,
+            signer_nip: sig.signer_nip,
+            valid: verificationResult.valid,
+            algorithm: sig.algorithm,
+            public_key: sig.public_key,
+            signed_at: sig.signed_at,
+            fingerprint: sig.fingerprint
+          });
+        } catch (error) {
+          console.warn(`Signature verification failed for ${sig.signer_name}:`, error.message);
+          validatedSignatures.push({
+            signer_name: sig.signer_name,
+            signer_nip: sig.signer_nip,
+            valid: false,
+            algorithm: sig.algorithm,
+            public_key: sig.public_key,
+            signed_at: sig.signed_at,
+            error: error.message
+          });
+        }
+      });
+    } else if (document.digital_signature) {
+      // Old format: single signature (backward compatibility)
+      try {
+        const verificationResult = signerService.verifyDocumentWithPublicKey(
+          document.signer_name,
+          document.digital_signature.signature,
+          document.digital_signature.public_key
+        );
+
+        validatedSignatures.push({
+          signer_name: document.signer_name,
+          signer_nip: document.signer_nip,
+          valid: verificationResult.valid,
+          algorithm: document.digital_signature.algorithm,
+          public_key: document.digital_signature.public_key,
+          signed_at: document.digital_signature.signed_at,
+          fingerprint: document.digital_signature.fingerprint
+        });
+      } catch (error) {
+        console.warn('Signature verification failed:', error.message);
+      }
+    }
+
+    const allValid = validatedSignatures.every(s => s.valid);
+
     res.status(200).json({
       success: true,
-      valid: true,
-      document: document,
-      message: 'Dokumen valid'
+      valid: allValid,
+      document: {
+        id: document.id,
+        filename: document.filename,
+        document_type: document.document_type,
+        document_name: document.document_name || document.document_title,
+        document_title: document.document_title,
+        original_filename: document.original_filename,
+        timestamp: document.timestamp,
+        notes: document.notes
+      },
+      signatures: validatedSignatures,
+      total_signatures: validatedSignatures.length,
+      message: allValid
+        ? `Semua ${validatedSignatures.length} tanda tangan digital valid`
+        : 'Ada tanda tangan yang tidak valid'
     });
 
   } catch (error) {
@@ -586,7 +322,7 @@ server.get('/verify-document/:id', (req, res) => {
   }
 });
 
-// Download document
+// API: Download document
 server.get('/download/:filename', (req, res) => {
   try {
     const { filename } = req.params;
@@ -609,15 +345,196 @@ server.get('/download/:filename', (req, res) => {
   }
 });
 
+// API: Get all signed documents
+server.get('/api/documents', (req, res) => {
+  try {
+    const db = loadDatabase();
+    res.status(200).json({
+      success: true,
+      documents: db.signed_documents.map(doc => ({
+        id: doc.id,
+        filename: doc.filename,
+        document_title: doc.document_title,
+        signer_name: doc.signer_name,
+        timestamp: doc.timestamp
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// API: Get document types
+server.get('/api/document-types', (req, res) => {
+  try {
+    const db = loadDatabase();
+    res.status(200).json({
+      success: true,
+      document_types: db.document_types || []
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// API: Generate document with multiple signatures
+server.post('/api/generate-document', async (req, res) => {
+  try {
+    const { document_type, signers, notes } = req.body;
+
+    if (!document_type || !signers || signers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jenis dokumen dan data penandatangan wajib diisi'
+      });
+    }
+
+    const db = loadDatabase();
+    const docTypeConfig = db.document_types.find(dt => dt.id === document_type);
+
+    if (!docTypeConfig) {
+      return res.status(404).json({
+        success: false,
+        message: 'Jenis dokumen tidak ditemukan'
+      });
+    }
+
+    // Generate unique document ID
+    const docId = uuidv4();
+
+    // Generate signatures for each signer
+    const signaturesData = [];
+    const qrCodes = {};
+
+    for (let i = 0; i < signers.length; i++) {
+      const signer = signers[i];
+      const signatureInfo = await signerService.generateDocumentSignature(signer.name, `${docId}_${i}`);
+      
+      // Generate QR Code for this signer
+      const verificationUrl = `${BASE_URL}/verify?id=${docId}&signer=${i}`;
+      const qrCodePath = await generateQRCodeWithImage(verificationUrl);
+      
+      signaturesData.push({
+        signer_name: signer.name,
+        signer_nip: signer.nip,
+        signature: signatureInfo.signature,
+        public_key: signatureInfo.public_key,
+        algorithm: signatureInfo.algorithm,
+        fingerprint: signatureInfo.fingerprint,
+        signed_at: signatureInfo.signed_at,
+        qr_code_path: qrCodePath
+      });
+
+      // Map QR code tag
+      const qrTag = signers.length === 1 ? 'qrCode' : `qrCode${i + 1}`;
+      qrCodes[qrTag] = qrCodePath;
+    }
+
+    // Read template
+    const templatePath = path.resolve(__dirname, docTypeConfig.template_path);
+    
+    if (!fs.existsSync(templatePath)) {
+      return res.status(404).json({
+        success: false,
+        message: `Template tidak ditemukan: ${templatePath}`
+      });
+    }
+
+    const templateContent = fs.readFileSync(templatePath, 'binary');
+    const zip = new PizZip(templateContent);
+
+    // Setup image module for multiple QR Codes
+    const imageModuleOpts = {
+      centered: true,
+      fileType: 'docx',
+      getImage: (tagValue) => {
+        if (qrCodes[tagValue]) {
+          return fs.readFileSync(qrCodes[tagValue]);
+        }
+        throw new Error(`QR Code tag ${tagValue} tidak ditemukan`);
+      },
+      getSize: () => {
+        return [100, 100];
+      },
+    };
+
+    const imageModule = new ImageModule(imageModuleOpts);
+    const doc = new Docxtemplater()
+      .attachModule(imageModule)
+      .loadZip(zip);
+
+    // Prepare data for rendering
+    const renderData = {};
+    Object.keys(qrCodes).forEach(tag => {
+      renderData[tag] = tag;
+    });
+
+    doc.setData(renderData);
+    doc.render();
+
+    // Save signed document
+    const outputDir = path.resolve(__dirname, 'templates', 'output');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const timestamp = Date.now();
+    const outputFilename = `${document_type}_${timestamp}.docx`;
+    const outputPath = path.join(outputDir, outputFilename);
+
+    const buffer = doc.getZip().generate({ type: 'nodebuffer' });
+    fs.writeFileSync(outputPath, buffer);
+
+    // Save to database
+    const signedDoc = {
+      id: docId,
+      filename: outputFilename,
+      file_path: outputPath,
+      document_type,
+      document_name: docTypeConfig.name,
+      signatures: signaturesData,
+      notes: notes || '',
+      timestamp: new Date().toISOString(),
+      verification_url: `${BASE_URL}/verify?id=${docId}`
+    };
+
+    db.signed_documents.push(signedDoc);
+    saveDatabase(db);
+
+    res.status(200).json({
+      success: true,
+      id: docId,
+      filename: outputFilename,
+      document_type: docTypeConfig.name,
+      signers: signers,
+      total_signatures: signers.length,
+      message: `Dokumen ${docTypeConfig.name} berhasil ditandatangani dengan ${signers.length} tanda tangan digital`
+    });
+
+  } catch (error) {
+    console.error('Error generating document:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Terjadi kesalahan saat membuat dokumen'
+    });
+  }
+});
+
 // Health check
 server.get('/health', (req, res) => {
   const db = loadDatabase();
   res.status(200).json({
     success: true,
-    message: 'KKP Generator is running',
+    message: 'Digital Document Signature is running',
     timestamp: new Date().toISOString(),
-    version: db.config?.version || '3.0.0-simple',
-    total_documents: db.generated_documents?.length || 0
+    version: db.config?.version || '2.0.0',
+    total_documents: db.signed_documents?.length || 0
   });
 });
 
@@ -630,8 +547,8 @@ server.use((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 KKP Generator Server running on http://localhost:${PORT}`);
-  console.log(`📄 Form Generator: http://localhost:${PORT}`);
-  console.log(`🔍 Verifikasi: http://localhost:${PORT}/verify?id=<document_id>`);
+  console.log(`🚀 Digital Document Signature Server running on http://localhost:${PORT}`);
+  console.log(`📝 Sign Document: http://localhost:${PORT}`);
+  console.log(`🔍 Verify Document: http://localhost:${PORT}/verify?id=<document_id>`);
   console.log(`💡 Health Check: http://localhost:${PORT}/health`);
 });

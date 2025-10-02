@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Dokumen - Informatika</title>
+    <title>Digital Document Signature</title>
     <style>
         * {
             margin: 0;
@@ -20,13 +20,12 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
             overflow: hidden;
         }
 
@@ -35,46 +34,89 @@
             color: white;
             padding: 40px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%);
         }
 
         .header h1 {
-            font-size: 3rem;
+            font-size: 2.5rem;
             margin-bottom: 15px;
             font-weight: 700;
-            position: relative;
-            z-index: 1;
-            background: linear-gradient(135deg, #fff 0%, #e8f4fd 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .header p {
-            opacity: 0.95;
-            font-size: 1.2rem;
-            position: relative;
-            z-index: 1;
-            font-weight: 500;
-        }
-
-        .form-container {
+        .content {
             padding: 50px;
         }
 
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .doc-type-section {
+            background: #fff3cd;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .doc-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .doc-type-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e1e8ed;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .doc-type-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .doc-type-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .doc-type-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .doc-type-card .badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .signer-form-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .signer-form-item h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         label {
@@ -85,139 +127,86 @@
             font-size: 14px;
         }
 
-        input, select, textarea {
+        input, textarea {
             width: 100%;
-            padding: 15px 20px;
+            padding: 12px 16px;
             border: 2px solid #e1e8ed;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(248, 249, 250, 0.8);
-            backdrop-filter: blur(5px);
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .row {
-            display: flex;
-            gap: 20px;
-        }
-
-        .col {
-            flex: 1;
-        }
-
-        .table-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px dashed #dee2e6;
-            margin: 20px 0;
-        }
-
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .add-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 15px;
             transition: all 0.3s ease;
         }
 
-        .add-btn:hover {
-            background: #218838;
-            transform: translateY(-2px);
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
         }
 
-        .student-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .student-row input {
-            flex: 1;
-            margin: 0;
-        }
-
-        .remove-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .remove-btn:hover {
-            background: #c82333;
-        }
-
-        .submit-btn {
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 20px 40px;
+            padding: 18px 40px;
             font-size: 18px;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             font-weight: 700;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-            position: relative;
-            overflow: hidden;
         }
 
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.6s;
-        }
-
-        .submit-btn:hover::before {
-            left: 100%;
-        }
-
-        .submit-btn:hover {
+        .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
         }
 
-        .submit-btn:disabled {
+        .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
             transform: none;
         }
 
+        .form-section {
+            display: none;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+
+        .form-section.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .result {
             margin-top: 30px;
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             display: none;
         }
@@ -226,304 +215,83 @@
             background: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
+            display: block;
         }
 
         .result.error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
+            display: block;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4facfe;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .required {
-            color: #dc3545;
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .info-box h3 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .signer-status {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .signer-status.new {
-            background: #fff3cd;
-            border-color: #ffeaa7;
-            color: #856404;
-        }
-
-        .signer-status.existing {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .field-manager-row {
+        .actions {
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
         }
 
-        .field-manager-row input, .field-manager-row select {
-            margin: 0;
-        }
-
-        .field-manager-row .field-name {
-            flex: 2;
-        }
-
-        .field-manager-row .field-label {
-            flex: 2;
-        }
-
-        .field-manager-row .field-type {
+        .actions a {
             flex: 1;
-        }
-
-        .field-manager-row .field-variable {
-            flex: 2;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            color: #6c757d;
-        }
-
-        .variable-preview {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #1976d2;
-        }
-
-        .field-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .btn-small {
-            padding: 5px 10px;
-            font-size: 12px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-danger {
-            background: #dc3545;
+            text-align: center;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
             color: white;
         }
 
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
+        .btn-download {
+            background: #007bff;
         }
 
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
+        .btn-verify {
+            background: #28a745;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎓 Generator Dokumen</h1>
-            <p>Program Studi Informatika - Sistem Digital Signature</p>
+            <h1>🔐 Digital Document Signature</h1>
+            <p>KKP, Persetujuan Hasil & KRS</p>
         </div>
 
-        <div class="form-container">
+        <div class="content">
             <div class="info-box">
-                <h3>ℹ️ Informasi</h3>
-                <p>Pilih jenis dokumen untuk menampilkan form yang sesuai. Sistem akan otomatis membuat kunci digital untuk penandatangan baru.</p>
+                <h3>ℹ️ Cara Penggunaan</h3>
+                <p>1. Pilih jenis dokumen (KKP, Persetujuan Hasil, atau KRS)</p>
+                <p>2. Isi data penandatangan sesuai jumlah yang diperlukan</p>
+                <p>3. QR Code otomatis ditambahkan untuk setiap penandatangan</p>
             </div>
 
-            <!-- Template Management Section -->
-            <div id="templateManagementSection" style="display: none;">
-                <div class="info-box" style="background: #f0f8ff; border-left-color: #4169e1;">
-                    <h3>📤 Upload Template Baru</h3>
-                    <p>Upload file .docx template yang sudah disetup dengan variabel yang diperlukan untuk jenis dokumen tertentu.</p>
-                </div>
-
-                <div class="upload-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <form id="uploadTemplateForm" enctype="multipart/form-data">
-                        <div class="row">
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="upload_document_type">Jenis Dokumen <span class="required">*</span></label>
-                                    <select id="upload_document_type" name="upload_document_type" required>
-                                        <option value="">Pilih Jenis Dokumen</option>
-                                        <option value="kkp">📄 Surat Permohonan KKP</option>
-                                        <option value="certificate">🏆 Sertifikat</option>
-                                        <option value="lembar_pengesahan">📋 Lembar Pengesahan</option>
-                                        <option value="custom">📄 Jenis Dokumen Lainnya</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="template_name">Nama Template <span class="required">*</span></label>
-                                    <input type="text" id="template_name" name="template_name" placeholder="Contoh: Template Surat Rekomendasi" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="template_description">Deskripsi Template</label>
-                            <textarea id="template_description" name="template_description" rows="2" placeholder="Deskripsi singkat tentang template ini..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="template_file">File Template (.docx) <span class="required">*</span></label>
-                            <input type="file" id="template_file" name="template_file" accept=".docx" required style="padding: 10px; border: 2px dashed #dee2e6; background: white;">
-                        </div>
-
-                        <div class="form-group">
-                            <label>📝 Field Template (Opsional)</label>
-                            <div id="templateFieldsContainer" style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
-                                <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">Tambahkan field yang akan digunakan dalam template. Jika kosong, sistem akan menggunakan field default.</p>
-                                <button type="button" class="add-btn" onclick="addTemplateField()">+ Tambah Field</button>
-                                <div id="templateFieldsList"></div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                            📤 Upload Template
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Uploaded Templates List -->
-                <div class="uploaded-templates-section" style="margin-top: 30px;">
-                    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
-                        <h3>📋 Template yang Diupload</h3>
-                        <p>Daftar template yang sudah diupload ke sistem. Klik refresh untuk memperbarui daftar.</p>
-                        <button type="button" class="add-btn" onclick="loadUploadedTemplates()" style="background: #17a2b8;">🔄 Refresh</button>
-                    </div>
-                    <div id="uploadedTemplatesList" style="margin-top: 15px;"></div>
+            <div class="doc-type-section">
+                <h3>📄 Pilih Jenis Dokumen</h3>
+                <div class="doc-type-grid" id="docTypeGrid">
+                    <!-- Will be populated by JS -->
                 </div>
             </div>
 
-            <!-- Mode Toggle Buttons -->
-            <div style="margin: 20px 0; text-align: center;">
-                <button type="button" class="submit-btn" id="documentModeBtn" onclick="toggleMode('document')" style="margin: 0 10px; width: auto; padding: 15px 30px;">
-                    📄 Buat Dokumen
-                </button>
-                <button type="button" class="submit-btn" id="templateModeBtn" onclick="toggleMode('template')" style="margin: 0 10px; width: auto; padding: 15px 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    📤 Kelola Template
-                </button>
-            </div>
+            <form id="signForm" class="form-section">
+                <h3>✍️ Data Penandatangan</h3>
+                <div id="signersContainer" style="margin-top: 20px;">
+                    <!-- Signers will be added here -->
+                </div>
 
-            <form id="documentForm">
                 <div class="form-group">
-                    <label for="document_type">Jenis Dokumen <span class="required">*</span></label>
-                    <select id="document_type" name="document_type" required onchange="loadDocumentFields()">
-                        <option value="">Pilih Jenis Dokumen</option>
-                        <option value="kkp">📄 Surat Permohonan KKP</option>
-                        <option value="certificate">🏆 Sertifikat</option>
-                        <option value="lembar_pengesahan">📋 Lembar Pengesahan</option>
-                    </select>
+                    <label for="notes">Catatan (opsional)</label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="Catatan tambahan..."></textarea>
                 </div>
 
-                <!-- Document Configuration Section -->
-                <div id="configurationSection" style="display: none;">
-                    <div class="info-box" style="background: #f0f8ff; border-left-color: #4169e1;">
-                        <h3>⚙️ Konfigurasi Dokumen</h3>
-                        <p>Atur field dan variabel yang akan digunakan dalam dokumen ini. Anda dapat menambah, mengedit, atau menghapus field sesuai kebutuhan.</p>
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="templateSelection">Template Dokumen <span class="required">*</span></label>
-                                <select id="templateSelection" name="templateSelection" onchange="loadTemplateFields()">
-                                    <option value="">Pilih Template</option>
-                                    <option value="default">Template Default</option>
-                                    <option value="custom">Kustomisasi Field</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="customFieldsManager" style="display: none;">
-                        <div class="table-section">
-                            <div class="table-header">
-                                <h3>📝 Manajemen Field Dokumen</h3>
-                                <div>
-                                    <button type="button" class="add-btn" onclick="addCustomField()">+ Tambah Field</button>
-                                    <button type="button" class="add-btn" style="background: #007bff; margin-left: 10px;" onclick="saveCustomTemplate()">💾 Simpan Template</button>
-                                </div>
-                            </div>
-                            <div id="customFieldsContainer">
-                                <!-- Custom fields will be added here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="dynamicFields" style="display: none;">
-                    <!-- Dynamic fields will be loaded here -->
-                </div>
-
-                <div id="signerSection" style="display: none;">
-                    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
-                        <h3>🔐 Informasi Penandatangan</h3>
-                        <p>Untuk keamanan dokumen, sistem akan membuat kunci digital untuk penandatangan yang baru pertama kali input.</p>
-                    </div>
-                    <div id="signerStatus"></div>
-                </div>
-
-                <button type="submit" class="submit-btn" id="submitBtn" style="display: none;">🚀 Buat Dokumen</button>
+                <button type="submit" class="btn" id="submitBtn">
+                    ✍️ Generate & Sign Document
+                </button>
             </form>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Sedang memproses dokumen...</p>
+                <p>Memproses dokumen dan menambahkan tanda tangan digital...</p>
             </div>
 
             <div class="result" id="result"></div>
@@ -531,859 +299,176 @@
     </div>
 
     <script>
-        let documentTemplates = {};
-        let currentSignerInfo = null;
-        let customFields = [];
-        let currentDocumentType = '';
-        let isKkpDocument = false;
-        let templateFields = [];
-        let currentMode = 'document'; // 'document' or 'template'
+        let documentTypes = [];
+        let selectedDocType = null;
 
-        // Load document templates from server
-        async function loadDocumentTemplates() {
+        // Fetch document types
+        async function loadDocumentTypes() {
             try {
-                const response = await fetch('/api/document-templates');
+                const response = await fetch('/api/document-types');
                 const data = await response.json();
-                if (data.success) {
-                    documentTemplates = data.templates;
-                }
+                documentTypes = data.document_types;
+                renderDocTypes();
             } catch (error) {
-                console.error('Error loading templates:', error);
+                console.error('Error loading document types:', error);
             }
         }
 
-        // Load fields when document type changes
-        async function loadDocumentFields() {
-            const documentType = document.getElementById('document_type').value;
-            const configurationSection = document.getElementById('configurationSection');
-            const dynamicFields = document.getElementById('dynamicFields');
-            const signerSection = document.getElementById('signerSection');
-            const submitBtn = document.getElementById('submitBtn');
+        function renderDocTypes() {
+            const grid = document.getElementById('docTypeGrid');
+            grid.innerHTML = '';
 
-            currentDocumentType = documentType;
-            isKkpDocument = documentType === 'kkp';
-
-            if (!documentType) {
-                configurationSection.style.display = 'none';
-                dynamicFields.style.display = 'none';
-                signerSection.style.display = 'none';
-                submitBtn.style.display = 'none';
-                return;
-            }
-
-            // Show configuration section
-            configurationSection.style.display = 'block';
-
-            // Reset template selection
-            document.getElementById('templateSelection').value = '';
-            document.getElementById('customFieldsManager').style.display = 'none';
-            dynamicFields.style.display = 'none';
-            signerSection.style.display = 'none';
-            submitBtn.style.display = 'none';
-
-            // For KKP, show special notice
-            if (isKkpDocument) {
-                showKkpNotice();
-            }
-        }
-
-        // Show special notice for KKP documents
-        function showKkpNotice() {
-            const notice = document.createElement('div');
-            notice.className = 'info-box';
-            notice.style.background = '#fff3cd';
-            notice.style.borderLeftColor = '#ffc107';
-            notice.innerHTML = `
-                <h3>⚠️ Dokumen KKP</h3>
-                <p>Dokumen KKP tidak menggunakan sistem template dinamis. Field-field sudah ditetapkan sesuai format standar.</p>
-            `;
-
-            const configSection = document.getElementById('configurationSection');
-            const existingNotice = configSection.querySelector('.kkp-notice');
-            if (existingNotice) {
-                existingNotice.remove();
-            }
-
-            notice.classList.add('kkp-notice');
-            configSection.appendChild(notice);
-        }
-
-        // Load template fields based on selection
-        async function loadTemplateFields() {
-            const templateSelection = document.getElementById('templateSelection').value;
-            const customFieldsManager = document.getElementById('customFieldsManager');
-            const dynamicFields = document.getElementById('dynamicFields');
-            const signerSection = document.getElementById('signerSection');
-            const submitBtn = document.getElementById('submitBtn');
-
-            if (!templateSelection) {
-                customFieldsManager.style.display = 'none';
-                dynamicFields.style.display = 'none';
-                signerSection.style.display = 'none';
-                submitBtn.style.display = 'none';
-                return;
-            }
-
-            if (templateSelection === 'custom') {
-                customFieldsManager.style.display = 'block';
-                initializeCustomFields();
-            } else {
-                customFieldsManager.style.display = 'none';
-                await loadDefaultTemplate();
-            }
-        }
-
-        // Load default template
-        async function loadDefaultTemplate() {
-            try {
-                const response = await fetch(`/api/document-fields/${currentDocumentType}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    renderDynamicFields(data.fields);
-                    document.getElementById('dynamicFields').style.display = 'block';
-                    document.getElementById('signerSection').style.display = 'block';
-                    document.getElementById('submitBtn').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error loading default template:', error);
-            }
-        }
-
-        // Render dynamic fields based on document type
-        function renderDynamicFields(fields) {
-            const container = document.getElementById('dynamicFields');
-            let html = '';
-
-            fields.forEach(field => {
-                if (field.name === 'tableData') {
-                    html += renderTableField(field);
-                } else if (field.name.includes('nama_ttd') || field.name.includes('nip_nidn')) {
-                    // Signer fields will be handled separately
-                    return;
-                } else {
-                    html += renderInputField(field);
-                }
+            documentTypes.forEach(docType => {
+                const card = document.createElement('div');
+                card.className = 'doc-type-card';
+                card.innerHTML = `
+                    <h3>${docType.name}</h3>
+                    <p style="color: #666; font-size: 14px; margin: 10px 0;">
+                        ${docType.signers_count} Penandatangan
+                    </p>
+                    <span class="badge">${docType.signers_count} QR Code</span>
+                `;
+                card.addEventListener('click', () => selectDocType(docType));
+                grid.appendChild(card);
             });
-
-            // Add signer fields
-            const signerFields = fields.filter(f => f.name.includes('nama_ttd') || f.name.includes('nip_nidn'));
-            html += renderSignerFields(signerFields);
-
-            container.innerHTML = html;
         }
 
-        // Render regular input field
-        function renderInputField(field) {
-            const required = field.required ? 'required' : '';
-            const requiredMark = field.required ? '<span class="required">*</span>' : '';
+        function selectDocType(docType) {
+            selectedDocType = docType;
 
-            if (field.type === 'textarea') {
-                return `
+            // Update UI
+            document.querySelectorAll('.doc-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // Show form section
+            document.getElementById('signForm').classList.add('show');
+
+            // Render signers form
+            renderSignersForm(docType);
+        }
+
+        function renderSignersForm(docType) {
+            const container = document.getElementById('signersContainer');
+            container.innerHTML = '';
+
+            docType.signers.forEach((signer, index) => {
+                const signerDiv = document.createElement('div');
+                signerDiv.className = 'signer-form-item';
+                signerDiv.innerHTML = `
+                    <h4>👤 ${signer.label}</h4>
                     <div class="form-group">
-                        <label for="${field.name}">${field.label} ${requiredMark}</label>
-                        <textarea id="${field.name}" name="${field.name}" rows="3" placeholder="${field.placeholder || ''}" ${required}></textarea>
+                        <label>Nama Lengkap</label>
+                        <input type="text" 
+                               name="signer_name_${index}" 
+                               value="${signer.default_name}"
+                               placeholder="Masukkan nama lengkap" 
+                               required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>NIP/NIDN/NBM</label>
+                        <input type="text" 
+                               name="signer_nip_${index}" 
+                               value="${signer.default_nip}"
+                               placeholder="Masukkan NIP/NIDN/NBM" 
+                               required>
                     </div>
                 `;
-            } else if (field.type === 'date') {
-                return `
-                    <div class="col">
-                        <div class="form-group">
-                            <label for="${field.name}">${field.label} ${requiredMark}</label>
-                            <input type="date" id="${field.name}" name="${field.name}" ${required}>
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="col">
-                        <div class="form-group">
-                            <label for="${field.name}">${field.label} ${requiredMark}</label>
-                            <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required}>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // Render table field for student data
-        function renderTableField(field) {
-            return `
-                <div class="table-section">
-                    <div class="table-header">
-                        <h3>${field.label} <span class="required">*</span></h3>
-                        <button type="button" class="add-btn" onclick="addTableRow()">+ Tambah</button>
-                    </div>
-                    <div id="tableContainer">
-                        <div class="student-row">
-                            ${field.columns.map(col => `<input type="text" placeholder="${col.charAt(0).toUpperCase() + col.slice(1)}" name="${col}[]" required>`).join('')}
-                            <button type="button" class="remove-btn" onclick="removeTableRow(this)">Hapus</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Render signer fields with security check
-        function renderSignerFields(signerFields) {
-            const documentType = document.getElementById('document_type').value;
-            let html = '';
-
-            if (documentType === 'certificate') {
-                // Special handling for certificate with 2 signers
-                const signer1Fields = signerFields.filter(f => f.name.includes('_1'));
-                const signer2Fields = signerFields.filter(f => f.name.includes('_2'));
-
-                if (signer1Fields.length > 0) {
-                    html += '<div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;"><h3>🔐 Tanda Tangan 1</h3></div><div class="row">';
-                    signer1Fields.forEach(field => {
-                        const required = field.required ? 'required' : '';
-                        const requiredMark = field.required ? '<span class="required">*</span>' : '';
-                        html += `
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="${field.name}">${field.label} ${requiredMark}</label>
-                                    <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required} ${field.name === 'nip_nidn_1' ? 'onblur="checkSignerSecurity()"' : ''}>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                }
-
-                if (signer2Fields.length > 0) {
-                    html += '<div class="info-box" style="background: #e3f2fd; border-left-color: #2196f3;"><h3>🔐 Tanda Tangan 2</h3></div><div class="row">';
-                    signer2Fields.forEach(field => {
-                        const required = field.required ? 'required' : '';
-                        const requiredMark = field.required ? '<span class="required">*</span>' : '';
-                        html += `
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="${field.name}">${field.label} ${requiredMark}</label>
-                                    <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required}>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                }
-            } else {
-                // Default handling for other document types
-                html += '<div class="row">';
-                signerFields.forEach(field => {
-                    const required = field.required ? 'required' : '';
-                    const requiredMark = field.required ? '<span class="required">*</span>' : '';
-                    html += `
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="${field.name}">${field.label} ${requiredMark}</label>
-                                <input type="text" id="${field.name}" name="${field.name}" placeholder="${field.placeholder || ''}" ${required} ${field.name === 'nip_nidn' ? 'onblur="checkSignerSecurity()"' : ''}>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-            }
-
-            return html;
-        }
-
-        // Initialize custom fields management
-        function initializeCustomFields() {
-            customFields = [];
-            const container = document.getElementById('customFieldsContainer');
-            container.innerHTML = `
-                <div class="field-manager-row" style="background: #f8f9fa; font-weight: bold;">
-                    <div class="field-name">Label Field</div>
-                    <div class="field-label">Placeholder</div>
-                    <div class="field-type">Tipe</div>
-                    <div class="field-variable">Variabel Template</div>
-                    <div class="field-actions">Aksi</div>
-                </div>
-            `;
-            addCustomField();
-        }
-
-        // Add custom field
-        function addCustomField() {
-            const container = document.getElementById('customFieldsContainer');
-            const fieldId = 'field_' + Date.now();
-
-            const fieldRow = document.createElement('div');
-            fieldRow.className = 'field-manager-row';
-            fieldRow.id = fieldId;
-
-            fieldRow.innerHTML = `
-                <input type="text" class="field-name" placeholder="Nama Field" oninput="updateVariableMapping('${fieldId}')">
-                <input type="text" class="field-label" placeholder="Placeholder text">
-                <select class="field-type">
-                    <option value="text">Text</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="date">Date</option>
-                    <option value="number">Number</option>
-                    <option value="email">Email</option>
-                </select>
-                <input type="text" class="field-variable" readonly placeholder="Variabel akan dibuat otomatis">
-                <div class="field-actions">
-                    <button type="button" class="btn-small btn-warning" onclick="previewField('${fieldId}')">👁️</button>
-                    <button type="button" class="btn-small btn-danger" onclick="removeCustomField('${fieldId}')">🗑️</button>
-                </div>
-            `;
-
-            container.appendChild(fieldRow);
-            updateCustomFieldsList();
-        }
-
-        // Generate variable name from field label
-        function generateVariableName(label) {
-            return label
-                .toLowerCase()
-                .replace(/[^a-z0-9\s]/gi, '') // Remove special characters
-                .replace(/\s+/g, '_') // Replace spaces with underscores
-                .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
-                .replace(/_+/g, '_'); // Replace multiple underscores with single
-        }
-
-        // Update variable mapping when field name changes
-        function updateVariableMapping(fieldId) {
-            const fieldRow = document.getElementById(fieldId);
-            const nameInput = fieldRow.querySelector('.field-name');
-            const variableInput = fieldRow.querySelector('.field-variable');
-
-            const variableName = generateVariableName(nameInput.value);
-            variableInput.value = variableName;
-
-            // Show preview of variable usage
-            showVariablePreview(fieldId, variableName);
-            updateCustomFieldsList();
-        }
-
-        // Show variable preview
-        function showVariablePreview(fieldId, variableName) {
-            const fieldRow = document.getElementById(fieldId);
-            let preview = fieldRow.querySelector('.variable-preview');
-
-            if (!preview) {
-                preview = document.createElement('div');
-                preview.className = 'variable-preview';
-                fieldRow.appendChild(preview);
-            }
-
-            if (variableName) {
-                preview.innerHTML = `Template: <strong>{{${variableName}}}</strong>`;
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
-        }
-
-        // Preview field
-        function previewField(fieldId) {
-            const fieldRow = document.getElementById(fieldId);
-            const name = fieldRow.querySelector('.field-name').value;
-            const placeholder = fieldRow.querySelector('.field-label').value;
-            const type = fieldRow.querySelector('.field-type').value;
-            const variable = fieldRow.querySelector('.field-variable').value;
-
-            if (!name) {
-                alert('Nama field harus diisi untuk preview');
-                return;
-            }
-
-            const previewHtml = generateFieldPreview(name, placeholder, type, variable);
-
-            // Show preview in modal or alert
-            const previewWindow = window.open('', '_blank', 'width=400,height=300');
-            previewWindow.document.write(`
-                <html>
-                    <head><title>Preview Field: ${name}</title></head>
-                    <body style="padding: 20px; font-family: sans-serif;">
-                        <h3>Preview Field: ${name}</h3>
-                        ${previewHtml}
-                        <br><br>
-                        <strong>Variabel Template:</strong> {{${variable}}}
-                    </body>
-                </html>
-            `);
-        }
-
-        // Generate field preview HTML
-        function generateFieldPreview(name, placeholder, type, variable) {
-            const required = '<span style="color: red;">*</span>';
-
-            if (type === 'textarea') {
-                return `
-                    <label>${name} ${required}</label><br>
-                    <textarea placeholder="${placeholder}" style="width: 100%; padding: 10px; margin: 5px 0;"></textarea>
-                `;
-            } else {
-                return `
-                    <label>${name} ${required}</label><br>
-                    <input type="${type}" placeholder="${placeholder}" style="width: 100%; padding: 10px; margin: 5px 0;">
-                `;
-            }
-        }
-
-        // Remove custom field
-        function removeCustomField(fieldId) {
-            if (confirm('Hapus field ini?')) {
-                document.getElementById(fieldId).remove();
-                updateCustomFieldsList();
-            }
-        }
-
-        // Update custom fields list
-        function updateCustomFieldsList() {
-            const container = document.getElementById('customFieldsContainer');
-            const fieldRows = container.querySelectorAll('.field-manager-row:not(:first-child)');
-
-            customFields = [];
-            fieldRows.forEach(row => {
-                const name = row.querySelector('.field-name').value;
-                const placeholder = row.querySelector('.field-label').value;
-                const type = row.querySelector('.field-type').value;
-                const variable = row.querySelector('.field-variable').value;
-
-                if (name && variable) {
-                    customFields.push({
-                        name: variable,
-                        label: name,
-                        placeholder: placeholder,
-                        type: type,
-                        required: true
-                    });
-                }
+                container.appendChild(signerDiv);
             });
-
-            // Generate dynamic fields if we have custom fields
-            if (customFields.length > 0) {
-                renderDynamicFields(customFields);
-                document.getElementById('dynamicFields').style.display = 'block';
-                document.getElementById('signerSection').style.display = 'block';
-                document.getElementById('submitBtn').style.display = 'block';
-            }
         }
 
-        // Save custom template
-        async function saveCustomTemplate() {
-            if (customFields.length === 0) {
-                alert('Tidak ada field kustom untuk disimpan');
-                return;
-            }
-
-            const templateName = prompt('Masukkan nama template kustom:');
-            if (!templateName) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/save-custom-template', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        document_type: currentDocumentType,
-                        template_name: templateName,
-                        custom_fields: customFields
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Template kustom berhasil disimpan!');
-                } else {
-                    alert('Gagal menyimpan template: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error saving custom template:', error);
-                alert('Terjadi kesalahan saat menyimpan template');
-            }
-        }
-
-        // Check signer security when NIP/NIDN is entered
-        async function checkSignerSecurity() {
-            const documentType = document.getElementById('document_type').value;
-            let namaTtd, nipNidn;
-
-            if (documentType === 'certificate') {
-                namaTtd = document.getElementById('nama_ttd_1')?.value;
-                nipNidn = document.getElementById('nip_nidn_1')?.value;
-            } else {
-                namaTtd = document.getElementById('nama_ttd')?.value;
-                nipNidn = document.getElementById('nip_nidn')?.value;
-            }
-
-            if (!namaTtd || !nipNidn) return;
-
-            try {
-                const response = await fetch('/api/check-signer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nama_ttd: namaTtd, nip_nidn: nipNidn })
-                });
-
-                const data = await response.json();
-                displaySignerStatus(data);
-
-                // Store signer info for form submission
-                currentSignerInfo = data;
-
-            } catch (error) {
-                console.error('Error checking signer:', error);
-            }
-        }
-
-        // Display signer status
-        function displaySignerStatus(signerData) {
-            const statusDiv = document.getElementById('signerStatus');
-
-            if (signerData.exists) {
-                statusDiv.innerHTML = `
-                    <div class="signer-status existing">
-                        ✅ Penandatangan sudah terdaftar dengan kunci digital yang valid.
-                        <br><strong>ID:</strong> ${signerData.signer_id}
-                    </div>
-                `;
-                // Store token in localStorage
-                localStorage.setItem('signer_token_' + signerData.signer_id, signerData.token);
-            } else {
-                statusDiv.innerHTML = `
-                    <div class="signer-status new">
-                        🔑 Penandatangan baru akan didaftarkan dan dibuat kunci digital.
-                        <br><strong>ID Baru:</strong> ${signerData.signer_id}
-                    </div>
-                `;
-                // Store token in localStorage
-                localStorage.setItem('signer_token_' + signerData.signer_id, signerData.token);
-            }
-        }
-
-        // Add table row
-        function addTableRow() {
-            const container = document.getElementById('tableContainer');
-            const firstRow = container.querySelector('.student-row');
-            const newRow = firstRow.cloneNode(true);
-
-            // Clear input values
-            newRow.querySelectorAll('input').forEach(input => input.value = '');
-            container.appendChild(newRow);
-        }
-
-        // Remove table row
-        function removeTableRow(button) {
-            const container = document.getElementById('tableContainer');
-            if (container.children.length > 1) {
-                button.parentElement.remove();
-            } else {
-                alert('Minimal harus ada satu data');
-            }
-        }
-
-        // Form submission
-        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+        document.getElementById('signForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const formData = new FormData(this);
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
-            const submitBtn = document.getElementById('submitBtn');
-
-            const documentType = formData.get('document_type');
-
-            if (!documentType) {
+            if (!selectedDocType) {
                 alert('Silakan pilih jenis dokumen terlebih dahulu');
                 return;
             }
 
-            // Collect all form data
-            const data = { document_type: documentType };
+            const formData = {
+                document_type: selectedDocType.id,
+                signers: [],
+                notes: document.getElementById('notes').value
+            };
 
-            // Get regular fields
-            for (const [key, value] of formData.entries()) {
-                if (!key.includes('[]')) {
-                    data[key] = value;
+            // Collect signers data
+            for (let i = 0; i < selectedDocType.signers_count; i++) {
+                const name = document.querySelector(`input[name="signer_name_${i}"]`).value;
+                const nip = document.querySelector(`input[name="signer_nip_${i}"]`).value;
+
+                if (!name || !nip) {
+                    alert(`Data penandatangan ${i + 1} belum lengkap`);
+                    return;
                 }
-            }
 
-            // Get table data if exists
-            const tableFields = ['nama', 'nim', 'semester'];
-            const hasTableData = tableFields.some(field => formData.getAll(field + '[]').length > 0);
-
-            if (hasTableData) {
-                data.tableData = tableFields[0] ? formData.getAll(tableFields[0] + '[]').map((_, index) => {
-                    const row = {};
-                    tableFields.forEach(field => {
-                        const values = formData.getAll(field + '[]');
-                        row[field] = values[index] || '';
-                    });
-                    return row;
-                }) : [];
-            }
-
-            // Add signer info
-            if (currentSignerInfo) {
-                data.signer_info = currentSignerInfo;
-            }
-
-            // Add custom fields if using custom template
-            const templateSelection = document.getElementById('templateSelection').value;
-            if (templateSelection === 'custom' && customFields.length > 0) {
-                data.custom_fields = customFields;
-                console.log('Sending custom fields:', customFields);
+                formData.signers.push({ name, nip });
             }
 
             try {
-                loading.style.display = 'block';
-                result.style.display = 'none';
-                submitBtn.disabled = true;
+                document.getElementById('loading').classList.add('show');
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('submitBtn').disabled = true;
 
-                const response = await fetch('/generate-document', {
+                const response = await fetch('/api/generate-document', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
                 });
 
-                const responseData = await response.json();
+                const data = await response.json();
 
-                if (response.ok) {
-                    const docTypeNames = {
-                        'kkp': 'Surat Permohonan KKP',
-                        'certificate': 'Sertifikat',
-                        'lembar_pengesahan': 'Lembar Pengesahan'
-                    };
+                if (response.ok && data.success) {
+                    let signersHtml = '<ul style="margin: 10px 0; padding-left: 20px;">';
+                    data.signers.forEach(s => {
+                        signersHtml += `<li>${s.name} - ${s.nip}</li>`;
+                    });
+                    signersHtml += '</ul>';
 
-                    result.className = 'result success';
-                    result.innerHTML = `
-                        <h3>✅ ${docTypeNames[documentType]} Berhasil Dibuat!</h3>
-                        <p><strong>No Surat:</strong> ${responseData.no_surat}</p>
-                        <p><strong>File:</strong> ${responseData.filename}</p>
-                        <p><strong>Digital Signature:</strong> ${responseData.signature ? 'Tersedia' : 'Tidak tersedia'}</p>
-                        <p><strong>QR Code:</strong> Tersedia di dokumen untuk verifikasi</p>
-                        <br>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <a href="/download/${responseData.filename}" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📥 Download Dokumen</a>
-                            <a href="/verify?id=${responseData.id}" target="_blank" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Lihat Verifikasi</a>
+                    document.getElementById('result').className = 'result success';
+                    document.getElementById('result').innerHTML = `
+                        <h3>✅ Dokumen Berhasil Ditandatangani!</h3>
+                        <p><strong>Jenis:</strong> ${selectedDocType.name}</p>
+                        <p><strong>File:</strong> ${data.filename}</p>
+                        <p><strong>Penandatangan:</strong></p>
+                        ${signersHtml}
+                        <p><strong>Total QR Codes:</strong> ${data.total_signatures}</p>
+                        <p style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 14px;">
+                            ✨ Setiap penandatangan memiliki keypair EdDSA dan QR Code unik!
+                        </p>
+                        <div class="actions">
+                            <a href="/download/${data.filename}" class="btn-download">📥 Download</a>
+                            <a href="/verify?id=${data.id}" target="_blank" class="btn-verify">🔍 Verifikasi</a>
                         </div>
                     `;
+
+                    // Reset
+                    document.getElementById('signForm').reset();
+                    document.querySelectorAll('.doc-type-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    selectedDocType = null;
+                    document.getElementById('signForm').classList.remove('show');
                 } else {
-                    throw new Error(responseData.message || 'Terjadi kesalahan');
+                    throw new Error(data.message || 'Terjadi kesalahan');
                 }
             } catch (error) {
-                result.className = 'result error';
-                result.innerHTML = `
+                document.getElementById('result').className = 'result error';
+                document.getElementById('result').innerHTML = `
                     <h3>❌ Gagal Membuat Dokumen</h3>
                     <p><strong>Error:</strong> ${error.message}</p>
                 `;
             } finally {
-                loading.style.display = 'none';
-                result.style.display = 'block';
-                submitBtn.disabled = false;
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
             }
         });
 
-        // Set default date
-        window.onload = function() {
-            loadDocumentTemplates();
-
-            // Set default masehi date when page loads
-            setTimeout(() => {
-                const masehiInput = document.getElementById('tanggal_masehi');
-                if (masehiInput) {
-                    masehiInput.value = new Date().toISOString().split('T')[0];
-                }
-            }, 100);
-        };
-
-        // Toggle between document creation and template management modes
-        function toggleMode(mode) {
-            currentMode = mode;
-            const documentModeBtn = document.getElementById('documentModeBtn');
-            const templateModeBtn = document.getElementById('templateModeBtn');
-            const documentForm = document.getElementById('documentForm');
-            const templateManagementSection = document.getElementById('templateManagementSection');
-
-            if (mode === 'document') {
-                documentModeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                templateModeBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                documentForm.style.display = 'block';
-                templateManagementSection.style.display = 'none';
-            } else {
-                documentModeBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                templateModeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                documentForm.style.display = 'none';
-                templateManagementSection.style.display = 'block';
-                loadUploadedTemplates();
-            }
-        }
-
-        // Add template field for upload form
-        function addTemplateField() {
-            const container = document.getElementById('templateFieldsList');
-            const fieldId = 'template_field_' + Date.now();
-
-            const fieldDiv = document.createElement('div');
-            fieldDiv.className = 'field-manager-row';
-            fieldDiv.id = fieldId;
-
-            fieldDiv.innerHTML = `
-                <input type="text" class="field-name" placeholder="Label Field" style="flex: 2;">
-                <input type="text" class="field-placeholder" placeholder="Placeholder" style="flex: 2;">
-                <select class="field-type" style="flex: 1;">
-                    <option value="text">Text</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="date">Date</option>
-                    <option value="number">Number</option>
-                    <option value="email">Email</option>
-                </select>
-                <input type="text" class="field-variable" placeholder="Variable name" style="flex: 2;">
-                <div class="field-actions">
-                    <button type="button" class="btn-small btn-danger" onclick="removeTemplateField('${fieldId}')">🗑️</button>
-                </div>
-            `;
-
-            container.appendChild(fieldDiv);
-        }
-
-        // Remove template field
-        function removeTemplateField(fieldId) {
-            document.getElementById(fieldId).remove();
-        }
-
-        // Upload template form submission
-        document.getElementById('uploadTemplateForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = new FormData();
-            const uploadDocumentType = document.getElementById('upload_document_type').value;
-            const templateName = document.getElementById('template_name').value;
-            const templateDescription = document.getElementById('template_description').value;
-            const templateFile = document.getElementById('template_file').files[0];
-
-            if (!uploadDocumentType || !templateName || !templateFile) {
-                alert('Jenis dokumen, nama template, dan file template wajib diisi');
-                return;
-            }
-
-            // Collect template fields
-            const fieldRows = document.querySelectorAll('#templateFieldsList .field-manager-row');
-            const fields = [];
-
-            fieldRows.forEach(row => {
-                const label = row.querySelector('.field-name').value;
-                const placeholder = row.querySelector('.field-placeholder').value;
-                const type = row.querySelector('.field-type').value;
-                const variable = row.querySelector('.field-variable').value;
-
-                if (label && variable) {
-                    fields.push({
-                        name: variable,
-                        label: label,
-                        type: type,
-                        placeholder: placeholder,
-                        required: true
-                    });
-                }
-            });
-
-            formData.append('document_type', uploadDocumentType);
-            formData.append('template_name', templateName);
-            formData.append('template_description', templateDescription);
-            formData.append('template_file', templateFile);
-
-            if (fields.length > 0) {
-                formData.append('template_fields', JSON.stringify(fields));
-            }
-
-            try {
-                const response = await fetch('/api/upload-template', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Template berhasil diupload!');
-                    document.getElementById('uploadTemplateForm').reset();
-                    document.getElementById('templateFieldsList').innerHTML = '';
-                    loadUploadedTemplates();
-                } else {
-                    alert('Gagal upload template: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert('Terjadi kesalahan saat upload template');
-            }
-        });
-
-        // Load uploaded templates
-        async function loadUploadedTemplates() {
-            try {
-                const response = await fetch('/api/uploaded-templates');
-                const data = await response.json();
-
-                const container = document.getElementById('uploadedTemplatesList');
-
-                if (data.success && data.templates.length > 0) {
-                    let html = '<div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-
-                    data.templates.forEach(template => {
-                        const uploadDate = new Date(template.uploaded_at).toLocaleDateString('id-ID');
-                        const fileSize = (template.file_size / 1024).toFixed(1);
-
-                        html += `
-                            <div style="padding: 15px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <h4 style="margin: 0 0 5px 0; color: #333;">${template.name}</h4>
-                                    <p style="margin: 0; color: #6c757d; font-size: 14px;">${template.description}</p>
-                                    <div style="margin-top: 5px; font-size: 12px; color: #6c757d;">
-                                        <span>📅 ${uploadDate}</span> |
-                                        <span>📄 ${template.original_filename}</span> |
-                                        <span>💾 ${fileSize} KB</span> |
-                                        <span>🏷️ ${template.type}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button class="btn-small btn-danger" onclick="deleteTemplate('${template.type}')">🗑️ Hapus</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    html += '</div>';
-                    container.innerHTML = html;
-                } else {
-                    container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Belum ada template yang diupload</div>';
-                }
-            } catch (error) {
-                console.error('Error loading uploaded templates:', error);
-            }
-        }
-
-        // Delete template
-        async function deleteTemplate(templateType) {
-            if (!confirm('Yakin ingin menghapus template ini?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/template/${templateType}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Template berhasil dihapus!');
-                    loadUploadedTemplates();
-                } else {
-                    alert('Gagal menghapus template: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                alert('Terjadi kesalahan saat menghapus template');
-            }
-        }
+        // Load document types on page load
+        loadDocumentTypes();
     </script>
 </body>
 </html>

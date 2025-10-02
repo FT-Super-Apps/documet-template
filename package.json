@@ -1,6 +1,6 @@
 {
-  "name": "generate-document-api-static",
-  "version": "2.0.0",
+  "name": "digital-document-signature",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,7 +9,7 @@
   },
   "author": "devnolife",
   "license": "ISC",
-  "description": "Static version of document generator without database dependencies",
+  "description": "Simple digital signature system with QR Code verification",
   "dependencies": {
     "cors": "^2.8.5",
     "docxtemplater": "^3.53.0",

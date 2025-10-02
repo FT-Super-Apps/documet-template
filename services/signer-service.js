@@ -25,79 +25,31 @@ class SignerService {
     }
   }
 
-  // Register new signer with EdDSA key generation
-  async registerSigner(nama_ttd, nip_nidn) {
+  // Generate unique keypair for each document signature
+  async generateDocumentSignature(nama_ttd, documentId) {
     try {
-      const db = this.loadDatabase();
-
-      // Create secure hash for lookup (using new hashing method)
-      const nipNidnHash = cryptoUtils.hashData(nip_nidn);
-
-      // Check if signer already exists by comparing hashes
-      const existingSigner = db.authorized_signers.find(signer => {
-        // For backward compatibility, check both old and new hash formats
-        if (signer.nip_nidn_hash && signer.nip_nidn_hash.includes(':')) {
-          return cryptoUtils.verifyHashedData(nip_nidn, signer.nip_nidn_hash);
-        } else {
-          // Legacy simple hash check
-          return signer.nip_nidn_hash === cryptoUtils.hashData(nip_nidn, 'legacy');
-        }
-      });
-
-      if (existingSigner) {
-        // Generate new secure token for existing signer
-        const token = cryptoUtils.generateSecureToken(existingSigner.signer_id);
-
-        return {
-          exists: true,
-          signer_id: existingSigner.signer_id,
-          public_key: existingSigner.public_key,
-          token: token,
-          algorithm: 'Ed25519',
-          message: 'Penandatangan sudah terdaftar'
-        };
-      }
-
-      // Generate new Ed25519 key pair
+      // Generate new Ed25519 key pair for THIS document only
       const { publicKey, privateKey } = cryptoUtils.generateKeyPair();
-      const signerId = cryptoUtils.generateSignerId(nama_ttd, nip_nidn);
+
+      // Create signature from signer name only
+      const signatureData = { nama_ttd };
+      const signature = cryptoUtils.createSignature(signatureData, privateKey);
 
       // Create document fingerprint for integrity
-      const signerData = { nama_ttd, nip_nidn, timestamp: new Date().toISOString() };
+      const signerData = { nama_ttd, documentId, timestamp: new Date().toISOString() };
       const fingerprint = cryptoUtils.createDocumentFingerprint(signerData);
 
-      const newSigner = {
-        signer_id: signerId,
-        nama_ttd: nama_ttd,
-        nip_nidn_hash: nipNidnHash, // Secure salted hash
-        public_key: publicKey,
-        private_key: privateKey, // In production, encrypt this with master key
-        algorithm: 'Ed25519',
-        key_fingerprint: fingerprint,
-        created_at: new Date().toISOString(),
-        status: 'active',
-        last_used: null,
-        usage_count: 0
-      };
-
-      db.authorized_signers.push(newSigner);
-      this.saveDatabase(db);
-
-      // Generate secure token for localStorage
-      const token = cryptoUtils.generateSecureToken(signerId);
-
       return {
-        exists: false,
-        signer_id: signerId,
+        signature,
         public_key: publicKey,
-        token: token,
+        private_key: privateKey,
         algorithm: 'Ed25519',
-        fingerprint: fingerprint,
-        message: 'Penandatangan berhasil didaftarkan dengan EdDSA'
+        fingerprint,
+        signed_at: new Date().toISOString()
       };
 
     } catch (error) {
-      throw new Error(`Failed to register signer: ${error.message}`);
+      throw new Error(`Failed to generate signature: ${error.message}`);
     }
   }
 
@@ -167,91 +119,28 @@ class SignerService {
     }
   }
 
-  // Create digital signature for document using EdDSA
-  signDocument(documentData, signerId) {
+  // Verify document signature using public key from document
+  verifyDocumentWithPublicKey(nama_ttd, signature, publicKey) {
     try {
-      const db = this.loadDatabase();
-      const signer = db.authorized_signers.find(s => s.signer_id === signerId);
-
-      if (!signer) {
-        throw new Error('Signer not found');
-      }
-
-      if (signer.status !== 'active') {
-        throw new Error('Signer is not active');
-      }
-
-      // Create document fingerprint for integrity
-      const documentFingerprint = cryptoUtils.createDocumentFingerprint(documentData);
-
-      // Create signature using EdDSA
-      const signature = cryptoUtils.createSignature(documentData, signer.private_key);
-
-      // Update signer usage statistics
-      signer.last_used = new Date().toISOString();
-      signer.usage_count = (signer.usage_count || 0) + 1;
-      this.saveDatabase(db);
+      // Verify signature with signer name only
+      const signatureData = { nama_ttd };
+      const isValid = cryptoUtils.verifySignature(signatureData, signature, publicKey);
 
       return {
-        signature: signature,
-        signer_id: signerId,
-        algorithm: signer.algorithm || 'Ed25519',
-        document_fingerprint: documentFingerprint,
-        key_fingerprint: signer.key_fingerprint,
-        signed_at: new Date().toISOString(),
-        usage_count: signer.usage_count
-      };
-
-    } catch (error) {
-      throw new Error(`Failed to sign document: ${error.message}`);
-    }
-  }
-
-  // Verify document signature using EdDSA
-  verifyDocumentSignature(documentData, signatureInfo, signerId) {
-    try {
-      const db = this.loadDatabase();
-      const signer = db.authorized_signers.find(s => s.signer_id === signerId);
-
-      if (!signer) {
-        return {
-          valid: false,
-          message: 'Signer not found',
-          algorithm: 'unknown'
-        };
-      }
-
-      // Verify signature
-      const signature = signatureInfo.signature || signatureInfo;
-      const isValid = cryptoUtils.verifySignature(documentData, signature, signer.public_key);
-
-      // Verify document fingerprint if available
-      let fingerprintValid = true;
-      if (signatureInfo.document_fingerprint) {
-        const currentFingerprint = cryptoUtils.createDocumentFingerprint(documentData);
-        fingerprintValid = currentFingerprint === signatureInfo.document_fingerprint;
-      }
-
-      return {
-        valid: isValid && fingerprintValid,
-        signer_name: signer.nama_ttd,
-        algorithm: signer.algorithm || 'Ed25519',
-        key_fingerprint: signer.key_fingerprint,
-        document_integrity: fingerprintValid,
-        signature_integrity: isValid,
-        verified_at: new Date().toISOString(),
-        signer_created: signer.created_at,
-        signer_usage_count: signer.usage_count || 0
+        valid: isValid,
+        algorithm: 'Ed25519',
+        verified_at: new Date().toISOString()
       };
 
     } catch (error) {
       return {
         valid: false,
         message: error.message,
-        algorithm: 'unknown'
+        algorithm: 'Ed25519'
       };
     }
   }
+
 
   // Additional security methods
 
