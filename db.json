@@ -4,7 +4,7 @@
       "id": "kkp",
       "name": "KKP (Kerja Praktik)",
       "signers_count": 1,
-      "template_path": "templates/kkp.docx",
+      "template_path": "templates/kkp/kkp.docx",
       "signers": [
         {
           "label": "Ketua Program Studi",
@@ -17,7 +17,7 @@
       "id": "persetujuan",
       "name": "Persetujuan Hasil",
       "signers_count": 3,
-      "template_path": "templates/persetujuan.docx",
+      "template_path": "templates/persetujuan/persetujuan.docx",
       "signers": [
         {
           "label": "Pembimbing 1",
@@ -40,7 +40,7 @@
       "id": "khs",
       "name": "KHS (Kartu Hasil Studi)",
       "signers_count": 2,
-      "template_path": "templates/khs.docx",
+      "template_path": "templates/khs/khs.docx",
       "signers": [
         {
           "label": "Dosen Pembimbing Akademik",
@@ -55,7 +55,138 @@
       ]
     }
   ],
-  "signed_documents": [],
+  "signed_documents": [
+    {
+      "id": "b0dc86e1-a593-48bf-b56a-d3f71c6da8f4",
+      "filename": "kkp_1759393552391.docx",
+      "file_path": "/workspaces/documet-template/templates/output/kkp_1759393552391.docx",
+      "document_type": "kkp",
+      "document_name": "KKP (Kerja Praktik)",
+      "signatures": [
+        {
+          "signer_name": "Dr. Ir. Ar. Irnawaty Idrus ST.,MT.,IPM., IAI",
+          "signer_nip": "0928088206",
+          "signature": "6bb77ed3c1230be5728966838ff3ea65415ff718b79d3f8020611db1e4f9e73344bebab35234442d673422fc86a27050f0cd142880013b642d395b4490eb7101",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAOomuRLTWLWze+A5OwjtR9JOeNBl2vijd9gHYopW2J/w=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "0d899f04f84dbce6bb0285e3c704b7d1085c1ce0eb92b03540f45a84780cc6561404e365ac94df39d9dda291dc2ddb135cf99002cd4a62517e2de908fb4ad907",
+          "signed_at": "2025-10-02T08:25:52.264Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        }
+      ],
+      "notes": "",
+      "timestamp": "2025-10-02T08:25:52.402Z",
+      "verification_url": "http://localhost:8080/verify?id=b0dc86e1-a593-48bf-b56a-d3f71c6da8f4"
+    },
+    {
+      "id": "cf0a61b3-681a-41f4-b36e-0b1dc2ab342b",
+      "filename": "kkp_1759393605213.docx",
+      "file_path": "/workspaces/documet-template/templates/output/kkp_1759393605213.docx",
+      "document_type": "kkp",
+      "document_name": "KKP (Kerja Praktik)",
+      "signatures": [
+        {
+          "signer_name": "Dr. Ir. Ar. Irnawaty Idrus ST.,MT.,IPM., IAI",
+          "signer_nip": "0928088206",
+          "signature": "5f1a013214791c7ebf550d5a798ce0b3ed160c42959a8cb0233cd3268d11d6e9dc136736047dcf79c4b51f7d340d19805c84823174983e9ee947bdd26152410e",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA44z2b4f2eIUz7iOcbfd66vdVekbY11nWlknvhlH8RBI=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "27732c4fd1502d0b733fab662f05f829659aff7d8f31e47939f1c4a4bfd904b942edfced4136db1e8e8cfe221e987e0e1c788cbcb311ce5fc1e98b5831123ca1",
+          "signed_at": "2025-10-02T08:26:45.070Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        }
+      ],
+      "notes": "",
+      "timestamp": "2025-10-02T08:26:45.225Z",
+      "verification_url": "http://localhost:8080/verify?id=cf0a61b3-681a-41f4-b36e-0b1dc2ab342b"
+    },
+    {
+      "id": "9aa82ee4-349e-4ed8-81f3-8d10f7050b4a",
+      "filename": "kkp_1759393701998.docx",
+      "file_path": "/workspaces/documet-template/templates/output/kkp_1759393701998.docx",
+      "document_type": "kkp",
+      "document_name": "KKP (Kerja Praktik)",
+      "signatures": [
+        {
+          "signer_name": "Test User",
+          "signer_nip": "123456",
+          "signature": "266da1d60244eaed37e1a16fe8661da44b03bb0eb74a4ebbb4c9cd5de7c62f6dee12f381e73c62fcd0c82debe4592e87a1af2e076896de5bda3b824135dee708",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAtKkiK3vCW5DT2IrDTFHWfzYr9JpKj1q2exAvYWdBDDw=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "6d52751a1773beccc8aed31dd6d704f9c9fb5c5c86fff47f6fd1e488da1c615e9c0d35e5015e49c198368be8747e0fd9ea42f3a1a640bcb765c30bcdb98f08d6",
+          "signed_at": "2025-10-02T08:28:21.838Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        }
+      ],
+      "notes": "Test document",
+      "timestamp": "2025-10-02T08:28:22.016Z",
+      "verification_url": "http://localhost:8080/verify?id=9aa82ee4-349e-4ed8-81f3-8d10f7050b4a"
+    },
+    {
+      "id": "3cdf4630-77bc-4a08-a187-b0b7e7f1d380",
+      "filename": "kkp_1759393778759.docx",
+      "file_path": "/workspaces/documet-template/templates/output/kkp_1759393778759.docx",
+      "document_type": "kkp",
+      "document_name": "KKP (Kerja Praktik)",
+      "signatures": [
+        {
+          "signer_name": "Dr. Ir. Ar. Irnawaty Idrus ST.,MT.,IPM., IAI",
+          "signer_nip": "0928088206",
+          "signature": "5588332a7062ee634273056970719e7559d6f083397d98f862c50ed8b8b34a513d5983830843f00152afffd757d247f6606a8c17b2ee98fbb3bbd0e18acf8f07",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAowev88a5FY2FX/e9yZGs1QFBqJfVN2Uby/jFUvUYSeU=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "54988e748de02c0ea3abf3c299886c1e9045981f6bc4e45fb5c5e25cf7aa424438c3204e53e019b3653fcd140e0c4e5fb35ec3a8041ded87e1c2e5d5feb4307f",
+          "signed_at": "2025-10-02T08:29:38.675Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        }
+      ],
+      "notes": "",
+      "timestamp": "2025-10-02T08:29:38.766Z",
+      "verification_url": "http://localhost:8080/verify?id=3cdf4630-77bc-4a08-a187-b0b7e7f1d380"
+    },
+    {
+      "id": "2ed13010-1ea4-4f4c-82dd-73253563febc",
+      "filename": "persetujuan_1759393844962.docx",
+      "file_path": "/workspaces/documet-template/templates/output/persetujuan_1759393844962.docx",
+      "document_type": "persetujuan",
+      "document_name": "Persetujuan Hasil",
+      "signatures": [
+        {
+          "signer_name": "Lukman, S.Kom., M.T.",
+          "signer_nip": "a",
+          "signature": "514477ede6fecee1971484b4d9efb665e90d134e1e83e3c49a83a537e3b55fda83ef757f064d1f449c0ed1b3ad07f72a865d92debb6820523080bc1962323701",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAshmf8VvfIvAEL7oT4DJuAnLndI4WHMVZIj6wU5PHjl4=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "4143a67b44c5cfc8b6f6c71971a73de1f84efe4bd679d77f338d85ed3113c46613c988d837143a597055afddabbf07c6e363b55a2355d7a13cfdd270b8dcbe5a",
+          "signed_at": "2025-10-02T08:30:44.888Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        },
+        {
+          "signer_name": "Muhyiddin A M Hayat, S.Kom, M.T.",
+          "signer_nip": "a",
+          "signature": "75d7d5bb360206d58cd06561dcfe5220bf8f461a657619da94a86fa225962e6d82606abee5fb9fbee70a64877e579564e1b6b08e0534b9be42ec9e51e78d330c",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAmPl8xzYKUk7/PF3lEqblVUxCYpK2Y7RmLsYjeWJW8d4=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "36c877a97d500c5097113c533772c4b24c4a793ed197b6e7453bed277371cabc0ac8bf287175760b232b893da482062d5022c3e83e64e28153dcac5aae66ad4d",
+          "signed_at": "2025-10-02T08:30:44.919Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        },
+        {
+          "signer_name": "Rizki Yusliana Bakti, S.T., M.T",
+          "signer_nip": "1307 284",
+          "signature": "5d382b54fa58d4d73f4e2ba7d719efa493946bcc2a99b83f8f24a72b8d2d1bb9063d34464980b41e9d8b6380ce40a3dd8e18410c35a6d99017f6dbee39521902",
+          "public_key": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA87//DC0S4VMLcmQcmymLMPLlIhEC92pXmGpzr5SrMw4=\n-----END PUBLIC KEY-----\n",
+          "algorithm": "Ed25519",
+          "fingerprint": "128664e88d183ecec5d410dcc68fccfdd57de815c81650fe6fcf470682d82709ef4e35e4610807a113f4f9ea01b1bd09548ab8af651b3fd174f39a2d03c132e7",
+          "signed_at": "2025-10-02T08:30:44.931Z",
+          "qr_code_path": "/workspaces/documet-template/templates/qr-code/qr-code.png"
+        }
+      ],
+      "notes": "",
+      "timestamp": "2025-10-02T08:30:44.964Z",
+      "verification_url": "http://localhost:8080/verify?id=2ed13010-1ea4-4f4c-82dd-73253563febc"
+    }
+  ],
   "config": {
     "app_name": "Digital Document Signature",
     "version": "2.0.0",

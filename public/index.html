@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Document Signature</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
     <style>
         * {
             margin: 0;
@@ -444,6 +445,7 @@
                             <a href="/verify?id=${data.id}" target="_blank" class="btn-verify">🔍 Verifikasi</a>
                         </div>
                     `;
+                    document.getElementById('result').style.display = 'block';
 
                     // Reset
                     document.getElementById('signForm').reset();
@@ -461,6 +463,7 @@
                     <h3>❌ Gagal Membuat Dokumen</h3>
                     <p><strong>Error:</strong> ${error.message}</p>
                 `;
+                document.getElementById('result').style.display = 'block';
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('submitBtn').disabled = false;
