@@ -21,6 +21,12 @@ documet-template/
 │   ├── khs.docx          # KHS template (2 TTD)
 │   ├── output/           # Generated documents
 │   └── qr-code/          # Temporary QR codes
+├── mcp-server/            # 🆕 MCP Server + Playwright Tests
+│   ├── index.js          # MCP server implementation
+│   ├── package.json      # MCP dependencies
+│   ├── playwright.config.js
+│   ├── tests/            # Playwright test suites
+│   └── README.md         # MCP documentation
 ├── uploads/               # Uploaded files (temp)
 ├── db.json               # Database
 ├── server.js             # Express server
@@ -66,7 +72,24 @@ npm start
 - **Verifikasi:** http://localhost:8080/verify?id=<doc_id>
 - **Health Check:** http://localhost:8080/health
 
-## 🔐 Fitur Keamanan
+## � MCP Server Integration
+
+Aplikasi ini sekarang mendukung **Model Context Protocol (MCP)** yang memungkinkan AI assistants seperti Claude untuk berinteraksi langsung dengan sistem!
+
+- 🤖 **5 MCP Tools** - Generate, verify, dan manage dokumen via AI
+- 🧪 **Playwright Testing** - Automated testing untuk semua workflows
+- 📚 **2 Resources** - Akses informasi template dan API
+
+**Quick Start MCP:**
+```bash
+cd mcp-server
+npm install
+npm start
+```
+
+Lihat [mcp-server/README.md](./mcp-server/README.md) untuk dokumentasi lengkap.
+
+## �🔐 Fitur Keamanan
 
 - ✅ **EdDSA (Ed25519)** - Algoritma kriptografi modern
 - ✅ **Unique Keypair** - Setiap tanda tangan punya keypair sendiri

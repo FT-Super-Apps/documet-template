@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"chrome": {
+			"command": "mcp-chrome-stdio",
+			"type": "stdio"
+		}
+	},
+	"inputs": []
+}
